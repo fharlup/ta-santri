@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+    'santri' => [ // Guard baru
+        'driver' => 'session',
+        'provider' => 'santriwatis',
+    ],
     ],
 
     /*
@@ -64,6 +68,10 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
+        'santriwatis' => [ // Provider baru
+        'driver' => 'eloquent',
+        'model' => App\Models\Santriwati::class,
+    ],
 
         // 'users' => [
         //     'driver' => 'database',

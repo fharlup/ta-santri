@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('santriwatis', function (Blueprint $table) {
             $table->id();
-            $table->string('nim')->unique();
-    $table->string('nama_lengkap');
-    $table->string('kelas');
-    $table->string('rfid_id')->unique();
+            $table->string('nama_lengkap');
+        $table->string('nim')->unique();
+        $table->string('username')->unique(); // Tambahan baru
+        $table->string('password');           // Tambahan baru
+        $table->string('kelas');
+        $table->string('rfid_id')->unique();
             $table->timestamps();
         });
     }
