@@ -18,9 +18,10 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-       'username',
+      'nama_lengkap',
+    'username',
     'password',
-    'role',
+    'role', 
     ];
 public function logs() {
     return $this->hasMany(Log::class);

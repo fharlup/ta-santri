@@ -31,6 +31,10 @@
    class="flex items-center px-4 py-3 rounded-2xl transition {{ Request::is('*kegiatan*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5' }}">
     <i class="ph ph-calendar mr-3 text-xl"></i> Manajemen Kegiatan
 </a>
+<a href="{{ route('user.index') }}" 
+   class="flex items-center px-4 py-3 rounded-2xl transition {{ Request::is('*user*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5' }}">
+    <i class="ph ph-user-gear mr-3 text-xl"></i> Manajemen Pengguna
+</a>
             </nav>
 
             <div class="p-8 border-t border-white/5">

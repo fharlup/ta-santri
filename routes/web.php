@@ -4,16 +4,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\KegiatanController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
-| SI-DISIPLIN Tunas Qur'an Web Routes
+| SI-DISIPLIN Tunas Qur'an - Full Routes Configuration
 |--------------------------------------------------------------------------
 */
 
-// 1. GUEST: Rute sebelum login
+// 1. Rute Guest (Halaman Login)
 Route::middleware('guest')->group(function () {
-    // Halaman Login utama
     Route::get('/', function () { 
         return view('auth.login'); 
     })->name('login');
@@ -21,17 +21,16 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-// 2. AUTH: Rute setelah login (Wajib Masuk)
+// 2. Rute Terautentikasi (Wajib Login)
 Route::middleware('auth')->group(function () {
     
-    // Proses Logout
+    // Proses Keluar Sistem
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // --- KELOMPOK: KESISWAAN (Admin Utama) ---
-    // Diproteksi oleh Middleware Role dan Prefix URL /kesiswaan/
+    // --- GRUP KHUSUS KESISWAAN (ADMIN) ---
     Route::middleware('role:Kesiswaan')->prefix('kesiswaan')->group(function () {
         
-        // A. DASHBOARD RINGKASAN
+        // A. DASHBOARD UTAMA
         Route::get('/dashboard', [DataMasterController::class, 'dashboard'])->name('kesiswaan.dashboard');
 
         // B. MANAJEMEN SANTRIWATI (Daftar, Tambah, Edit, Hapus)
@@ -44,8 +43,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{id}/hapus', [DataMasterController::class, 'destroy'])->name('santri.destroy');
         });
 
-        // C. MANAJEMEN KEGIATAN (Sholat Dzuhur, dll)
-        // Menggunakan Resource agar lebih ringkas (Index, Create, Store, Edit, Update, Destroy)
+        // C. MANAJEMEN JADWAL KEGIATAN (Tahajud s/d Komdis)
         Route::resource('kegiatan', KegiatanController::class)->names([
             'index'   => 'kegiatan.index',
             'create'  => 'kegiatan.create',
@@ -55,9 +53,19 @@ Route::middleware('auth')->group(function () {
             'destroy' => 'kegiatan.destroy',
         ]);
 
-        // D. MENU LAIN (Placeholder sesuai Sidebar)
-        Route::get('/presensi', function() { return "Halaman Presensi"; })->name('kesiswaan.presensi');
-        Route::get('/penilaian', function() { return "Halaman Penilaian"; })->name('kesiswaan.penilaian');
+        // D. MANAJEMEN PENGGUNA (STAFF/ADMIN)
+        Route::resource('user', UserController::class)->names([
+            'index'   => 'user.index',
+            'create'  => 'user.create',
+            'store'   => 'user.store',
+            'edit'    => 'user.edit',
+            'update'  => 'user.update',
+            'destroy' => 'user.destroy',
+        ]);
+
+        // E. PLACEHOLDER MENU LAINNYA
+        Route::get('/presensi', function() { return "Halaman Riwayat Presensi"; })->name('kesiswaan.presensi');
+        Route::get('/penilaian', function() { return "Halaman Penilaian Skor"; })->name('kesiswaan.penilaian');
     });
 
 });
