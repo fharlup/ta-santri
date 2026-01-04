@@ -10,60 +10,37 @@ use Illuminate\Support\Facades\Auth;
 class KegiatanController extends Controller
 {
     // FR-02 & FR-08: Melihat daftar kegiatan
-    public function index()
-    {
-        $kegiatans = Kegiatan::latest()->get();
-        return view('kegiatan.index', compact('kegiatans'));
+   public function index() {
+        $kegiatans = Kegiatan::orderBy('jam', 'asc')->get();
+        return view('kesiswaan.kegiatan.index', compact('kegiatans'));
     }
 
-    // FR-02 & FR-08: Menyimpan kegiatan baru
-    public function store(Request $request)
-    {
+    public function create() {
+        return view('kesiswaan.kegiatan.create');
+    }
+
+    public function store(Request $request) {
         $request->validate([
-            'nama_kegiatan' => 'required',
-            'ustadzah_pendamping' => 'required',
-            'waktu_mulai' => 'required|date',
+            'nama_kegiatan' => 'required|string|max:255',
+            'jam' => 'required'
         ]);
 
-        $kegiatan = Kegiatan::create($request->all());
-
-        // FR-06: Catat aktivitas ke Log
-        Log::create([
-            'user_id' => Auth::id(),
-            'aktivitas' => 'Membuat kegiatan baru: ' . $kegiatan->nama_kegiatan,
-        ]);
-
-        return redirect()->back()->with('success', 'Kegiatan berhasil ditambahkan!');
+        Kegiatan::create($request->all());
+        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil ditambah');
     }
 
-    // FR-02 & FR-08: Mengupdate data kegiatan
-    public function update(Request $request, $id)
-    {
+    public function edit($id) {
+        $kegiatan = Kegiatan::findOrFail($id);
+        return view('kesiswaan.kegiatan.edit', compact('kegiatan'));
+    }
+
+    public function update(Request $request, $id) {
         $kegiatan = Kegiatan::findOrFail($id);
         $kegiatan->update($request->all());
-
-        // FR-06: Catat aktivitas ke Log
-        Log::create([
-            'user_id' => Auth::id(),
-            'aktivitas' => 'Mengubah data kegiatan: ' . $kegiatan->nama_kegiatan,
-        ]);
-
-        return redirect()->back()->with('success', 'Kegiatan berhasil diperbarui!');
+        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil diupdate');
     }
-
-    // FR-02 & FR-08: Menghapus kegiatan
-    public function destroy($id)
-    {
-        $kegiatan = Kegiatan::findOrFail($id);
-        $nama = $kegiatan->nama_kegiatan;
-        $kegiatan->delete();
-
-        // FR-06: Catat aktivitas ke Log
-        Log::create([
-            'user_id' => Auth::id(),
-            'aktivitas' => 'Menghapus kegiatan: ' . $nama,
-        ]);
-
-        return redirect()->back()->with('success', 'Kegiatan berhasil dihapus!');
-    }
+    public function destroy($id) {
+        Kegiatan::findOrFail($id)->delete();
+        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan dihapus');
+    } 
 }

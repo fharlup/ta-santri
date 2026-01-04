@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('kegiatans', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_kegiatan');
-    $table->string('ustadzah_pendamping');
-    $table->dateTime('waktu_mulai');
+            $table->string('nama_kegiatan'); // Contoh: Sholat Dzuhur
+        $table->time('jam');             // Contoh: 12:00
             $table->timestamps();
         });
     }
