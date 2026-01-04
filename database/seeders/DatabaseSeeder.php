@@ -15,46 +15,37 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. SEEDER PENGGUNA (STAFF/ADMIN)
-        $staffs = [
-            ['nama' => 'Ustadzah Fatimah', 'user' => 'admin', 'role' => 'Kesiswaan'],
-            ['nama' => 'Ustadzah Sarah', 'user' => 'sarah', 'role' => 'Komdis'],
-            ['nama' => 'Ustadzah Aminah', 'user' => 'aminah', 'role' => 'Musyrifah'],
+        User::updateOrCreate(
+            ['username' => 'admin'],
+            [
+                'nama_lengkap' => 'Admin Kesiswaan',
+                'password' => Hash::make('123'),
+                'role' => 'Kesiswaan'
+            ]
+        );
+
+        // 2. SEEDER SANTRIWATI (CONTOH DATA)
+        $santris = [
+            ['nama' => 'Aisyah Humaira', 'nim' => '2026001', 'user' => 'aisyah', 'rfid' => 'RFID001', 'kelas' => '10-A'],
+            ['nama' => 'Zahra Fatimah', 'nim' => '2026002', 'user' => 'zahra', 'rfid' => 'RFID002', 'kelas' => '11-B'],
+            ['nama' => 'Khadijah Al-Kubra', 'nim' => '2026003', 'user' => 'khadijah', 'rfid' => 'RFID003', 'kelas' => '10-A'],
+            ['nama' => 'Fauzi Taufiq', 'nim' => '2026004', 'user' => 'fauzi', 'rfid' => 'RFID004', 'kelas' => 'TI-46-05'],
         ];
 
-        foreach ($staffs as $s) {
-            User::updateOrCreate(
-                ['username' => $s['user']],
+        foreach ($santris as $s) {
+            Santriwati::updateOrCreate(
+                ['nim' => $s['nim']],
                 [
                     'nama_lengkap' => $s['nama'],
-                    'password' => Hash::make('123'),
-                    'role' => $s['role']
+                    'username' => $s['user'],
+                    'password' => Hash::make('santri123'),
+                    'kelas' => $s['kelas'],
+                    'rfid_id' => $s['rfid'],
                 ]
             );
         }
 
-        // 2. SEEDER SANTRIWATI (AKUN LOGIN MURID)
-        $daftarSantri = [
-            ['nama' => 'Aisyah Humaira', 'nim' => '2026001', 'user' => 'aisyah', 'rfid' => 'RFID001'],
-            ['nama' => 'Zahra Fatimah', 'nim' => '2026002', 'user' => 'zahra', 'rfid' => 'RFID002'],
-            ['nama' => 'Khadijah Al-Kubra', 'nim' => '2026003', 'user' => 'khadijah', 'rfid' => 'RFID003'],
-            ['nama' => 'Siti Maryam', 'nim' => '2026004', 'user' => 'siti', 'rfid' => 'RFID004'],
-            ['nama' => 'Fatima Az-Zahra', 'nim' => '2026005', 'user' => 'fatima', 'rfid' => 'RFID005'],
-        ];
-
-        foreach ($daftarSantri as $ds) {
-            Santriwati::updateOrCreate(
-                ['nim' => $ds['nim']],
-                [
-                    'nama_lengkap' => $ds['nama'],
-                    'username'     => $ds['user'],
-                    'password'     => Hash::make('santri123'),
-                    'kelas'        => '10-A',
-                    'rfid_id'      => $ds['rfid'],
-                ]
-            );
-        }
-
-        // 3. SEEDER JADWAL KEGIATAN
+        // 3. SEEDER JADWAL KEGIATAN LENGKAP
         $jadwal = [
             ['nama' => 'Sholat Tahajud', 'jam' => '02:30'],
             ['nama' => 'Shubuh', 'jam' => '04:15'],
@@ -78,34 +69,35 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 4. SEEDER DATA PRESENSI UNTUK GRAFIK (7 HARI TERAKHIR)
+        // 4. SEEDER SIMULASI PRESENSI (7 HARI TERAKHIR)
         $allSantri = Santriwati::all();
         $allKegiatan = Kegiatan::all();
         
-        // Loop untuk 7 hari terakhir
+        // Loop 7 hari ke belakang
         for ($i = 0; $i < 7; $i++) {
             $tanggal = Carbon::now()->subDays($i);
             
             foreach ($allKegiatan as $keg) {
                 foreach ($allSantri as $santri) {
-                    // Simulasi: 80% Hadir, 10% Terlambat, 10% Tidak Hadir
-                    $rand = rand(1, 10);
+                    // Simulasi: 70% Hadir, 20% Terlambat, 10% Tidak Absen
+                    $random = rand(1, 10);
                     
-                    if ($rand <= 9) { // Hadir atau Terlambat
-                        $status = ($rand == 9) ? 'Terlambat' : 'Hadir';
-                        
-                        // Set waktu scan sekitar jam kegiatan
+                    if ($random <= 9) {
+                        $status = ($random >= 8) ? 'Terlambat' : 'Tepat Waktu';
                         $jamKegiatan = Carbon::parse($keg->jam);
+                        
+                        // Set waktu scan (Tepat waktu = sebelum/pas, Terlambat = lewat 15-30 mnt)
                         $waktuScan = $tanggal->copy()->setTime(
                             $jamKegiatan->hour, 
-                            $jamKegiatan->minute + ($status == 'Terlambat' ? rand(16, 30) : rand(-15, 15))
+                            $jamKegiatan->minute + ($status == 'Terlambat' ? rand(16, 40) : rand(-10, 15))
                         );
 
                         Presensi::create([
                             'santriwati_id' => $santri->id,
                             'kegiatan_id' => $keg->id,
                             'waktu_scan' => $waktuScan,
-                            'status' => $status
+                            'status' => $status,
+                            'keterangan' => ($status == 'Terlambat') ? 'telat bangun tidur' : null //
                         ]);
                     }
                 }

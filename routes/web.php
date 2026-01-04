@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\KegiatanController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PresensiController; // 1. PASTIKAN INI SUDAH DIIMPORT
 
 /*
 |--------------------------------------------------------------------------
@@ -63,9 +64,18 @@ Route::middleware('auth')->group(function () {
             'destroy' => 'user.destroy',
         ]);
 
-        // E. PLACEHOLDER MENU LAINNYA
-        Route::get('/presensi', function() { return "Halaman Riwayat Presensi"; })->name('kesiswaan.presensi');
+        // E. MANAJEMEN PRESENSI (SCAN RFID & RIWAYAT)
+        Route::prefix('presensi')->group(function () {
+            // Rute ini yang tadi hilang dan menyebabkan error
+            Route::get('/scan', [PresensiController::class, 'scanPage'])->name('presensi.scan');
+            Route::post('/check', [PresensiController::class, 'checkRfid'])->name('presensi.check');
+            Route::get('/riwayat', [PresensiController::class, 'riwayat'])->name('presensi.riwayat');
+            Route::get('/presensi/{id}/edit', [PresensiController::class, 'edit'])->name('presensi.edit');
+            Route::get('/presensi/riwayat', [PresensiController::class, 'riwayat'])->name('presensi.riwayat');
+Route::put('/presensi/{id}/update', [PresensiController::class, 'update'])->name('presensi.update');
+        });
+
+        // F. PENILAIAN
         Route::get('/penilaian', function() { return "Halaman Penilaian Skor"; })->name('kesiswaan.penilaian');
     });
-
 });

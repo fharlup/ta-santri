@@ -35,6 +35,10 @@
    class="flex items-center px-4 py-3 rounded-2xl transition {{ Request::is('*user*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5' }}">
     <i class="ph ph-user-gear mr-3 text-xl"></i> Manajemen Pengguna
 </a>
+<a href="{{ route('presensi.riwayat') }}" 
+           class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*presensi/riwayat*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+            <i class="ph ph-clock-counter-clockwise mr-3 text-xl"></i> Riwayat Presensi
+        </a>
             </nav>
 
             <div class="p-8 border-t border-white/5">
