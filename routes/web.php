@@ -5,36 +5,50 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\KegiatanController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\PresensiController; // 1. PASTIKAN INI SUDAH DIIMPORT
+use App\Http\Controllers\KesiswaanController;
+use App\Http\Controllers\PenilaianController;
+use App\Http\Controllers\PresensiController;
 
 /*
 |--------------------------------------------------------------------------
-| SI-DISIPLIN Tunas Qur'an - Full Routes Configuration
+| SI-DISIPLIN Tunas Qur'an - Routes
 |--------------------------------------------------------------------------
 */
 
-// 1. Rute Guest (Halaman Login)
+/*
+|--------------------------------------------------------------------------
+| 1. GUEST (LOGIN)
+|--------------------------------------------------------------------------
+*/
 Route::middleware('guest')->group(function () {
-    Route::get('/', function () { 
-        return view('auth.login'); 
+    Route::get('/', function () {
+        return view('auth.login');
     })->name('login');
 
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-// 2. Rute Terautentikasi (Wajib Login)
+/*
+|--------------------------------------------------------------------------
+| 2. AUTHENTICATED
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
-    
-    // Proses Keluar Sistem
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // --- GRUP KHUSUS KESISWAAN (ADMIN) ---
+    /*
+    |--------------------------------------------------------------------------
+    | 3. ROLE: KESISWAAN
+    |--------------------------------------------------------------------------
+    */
     Route::middleware('role:Kesiswaan')->prefix('kesiswaan')->group(function () {
-        
-        // A. DASHBOARD UTAMA
-        Route::get('/dashboard', [DataMasterController::class, 'dashboard'])->name('kesiswaan.dashboard');
 
-        // B. MANAJEMEN SANTRIWATI (Daftar, Tambah, Edit, Hapus)
+        /* ===== DASHBOARD ===== */
+        Route::get('/dashboard', [DataMasterController::class, 'dashboard'])
+            ->name('kesiswaan.dashboard');
+
+        /* ===== SANTRIWATI ===== */
         Route::prefix('santri')->group(function () {
             Route::get('/', [DataMasterController::class, 'index'])->name('santri.index');
             Route::get('/tambah', [DataMasterController::class, 'create'])->name('santri.create');
@@ -44,7 +58,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{id}/hapus', [DataMasterController::class, 'destroy'])->name('santri.destroy');
         });
 
-        // C. MANAJEMEN JADWAL KEGIATAN (Tahajud s/d Komdis)
+        /* ===== KEGIATAN ===== */
         Route::resource('kegiatan', KegiatanController::class)->names([
             'index'   => 'kegiatan.index',
             'create'  => 'kegiatan.create',
@@ -54,7 +68,7 @@ Route::middleware('auth')->group(function () {
             'destroy' => 'kegiatan.destroy',
         ]);
 
-        // D. MANAJEMEN PENGGUNA (STAFF/ADMIN)
+        /* ===== USER ===== */
         Route::resource('user', UserController::class)->names([
             'index'   => 'user.index',
             'create'  => 'user.create',
@@ -64,18 +78,55 @@ Route::middleware('auth')->group(function () {
             'destroy' => 'user.destroy',
         ]);
 
-        // E. MANAJEMEN PRESENSI (SCAN RFID & RIWAYAT)
+        /* ===== PRESENSI ===== */
         Route::prefix('presensi')->group(function () {
-            // Rute ini yang tadi hilang dan menyebabkan error
-            Route::get('/scan', [PresensiController::class, 'scanPage'])->name('presensi.scan');
-            Route::post('/check', [PresensiController::class, 'checkRfid'])->name('presensi.check');
-            Route::get('/riwayat', [PresensiController::class, 'riwayat'])->name('presensi.riwayat');
-            Route::get('/presensi/{id}/edit', [PresensiController::class, 'edit'])->name('presensi.edit');
-            Route::get('/presensi/riwayat', [PresensiController::class, 'riwayat'])->name('presensi.riwayat');
-Route::put('/presensi/{id}/update', [PresensiController::class, 'update'])->name('presensi.update');
+            Route::get('/scan', [PresensiController::class, 'scanPage'])
+                ->name('presensi.scan');
+
+            Route::post('/check', [PresensiController::class, 'checkRfid'])
+                ->name('presensi.check');
+
+            Route::get('/riwayat', [PresensiController::class, 'riwayat'])
+                ->name('presensi.riwayat');
+
+            Route::get('/{id}/edit', [PresensiController::class, 'edit'])
+                ->name('presensi.edit');
+
+            Route::put('/{id}/update', [PresensiController::class, 'update'])
+                ->name('presensi.update');
+
+            /* REKAP & EXPORT (KHUSUS KESISWAAN) */
+            Route::get('/rekap', [KesiswaanController::class, 'rekapPresensi'])
+                ->name('presensi.rekap');
+
+            Route::get('/export', [KesiswaanController::class, 'exportPresensi'])
+                ->name('presensi.export');
         });
 
-        // F. PENILAIAN
-        Route::get('/penilaian', function() { return "Halaman Penilaian Skor"; })->name('kesiswaan.penilaian');
+        /* ===== PENILAIAN ===== */
+        Route::prefix('penilaian')->group(function () {
+            Route::get('/export', [PenilaianController::class, 'export'])->name('penilaian.export');
+            Route::get('/rekap', [PenilaianController::class, 'rekap'])
+                ->name('penilaian.rekap');
+
+            Route::get('/riwayat', [PenilaianController::class, 'riwayat'])
+                ->name('penilaian.riwayat');
+
+            Route::get('/create', [PenilaianController::class, 'create'])
+                ->name('penilaian.create');
+
+            Route::post('/store', [PenilaianController::class, 'store'])
+                ->name('penilaian.store');
+
+            Route::get('/{id}/edit', [PenilaianController::class, 'edit'])
+                ->name('penilaian.edit');
+
+            Route::put('/{id}/update', [PenilaianController::class, 'update'])
+                ->name('penilaian.update');
+
+            Route::delete('/{id}/destroy', [PenilaianController::class, 'destroy'])
+                ->name('penilaian.destroy');
+        });
+
     });
 });

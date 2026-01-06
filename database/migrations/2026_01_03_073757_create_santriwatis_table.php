@@ -18,7 +18,10 @@ return new class extends Migration
         $table->string('username')->unique(); // Tambahan baru
         $table->string('password');           // Tambahan baru
         $table->string('kelas');
+
+        $table->string('angkatan')->nullable(); // Contoh: "Angkatan 2024"
         $table->string('rfid_id')->unique();
+
             $table->timestamps();
         });
     }

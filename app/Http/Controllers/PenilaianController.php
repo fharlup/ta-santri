@@ -2,58 +2,113 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Penilaian;
 use App\Models\Santriwati;
-use App\Models\Log;
+use App\Models\Penilaian;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
+use App\Models\Kegiatan;    
+use App\Exports\PenilaianExport;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Presensi;
+use Carbon\Carbon;
 class PenilaianController extends Controller
 {
-    // Melihat semua data penilaian (Kesiswaan/KOMDIS/Musyrifah)
-    public function index()
+    public function create()
     {
-        $penilaians = Penilaian::with('santriwati')->latest()->get();
-        return view('penilaian.index', compact('penilaians'));
+        $santris = Santriwati::all();
+        return view('kesiswaan.penilaian.create', compact('santris'));
     }
 
-    // FR-12: Musyrifah/Admin membuat data penilaian kedisiplinan
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'santriwati_id' => 'required',
-            'muatan_karakter' => 'required',
-            'skor' => 'required|integer',
-            'deskripsi' => 'required',
+            'tanggal' => 'required|date',
+            'angkatan' => 'required',
+            'disiplin' => 'required',
+            'k3' => 'required',
+            'tanggung_jawab' => 'required',
+            'inisiatif_kreativitas' => 'required',
+            'adab' => 'required',
+            'berterate' => 'required',
+            'kesabaran' => 'required',
+            'produktif' => 'required',
+            'mandiri' => 'required',
+            'optimis' => 'required',
+            'kejujuran' => 'required',
+            'deskripsi' => 'nullable'
         ]);
 
-        $penilaian = Penilaian::create($request->all());
+        Penilaian::create($validated);
 
-        // FR-06: Catat ke Log
-        Log::create([
-            'user_id' => Auth::id(),
-            'aktivitas' => "Memberi skor {$request->skor} kepada Santri ID: {$request->santriwati_id}",
-        ]);
-
-        return redirect()->back()->with('success', 'Penilaian berhasil disimpan!');
+        return redirect()->route('penilaian.riwayat')->with('success', 'Data berhasil disubmit'); //
     }
 
-    // FR-15: Riwayat Kedisiplinan Pribadi untuk Santriwati
-    public function myHistory()
+    public function riwayat()
     {
-        // Asumsi user Santriwati terhubung dengan data santri lewat field 'username' atau 'related_id'
-        // Di sini kita ambil data berdasarkan santri_id yang login
-        $santri = Santriwati::where('nama_lengkap', Auth::user()->username)->first(); 
-        
-        $history = Penilaian::where('santriwati_id', $santri->id)->latest()->get();
-        return view('santri.discipline_history', compact('history'));
+        $penilaians = Penilaian::with('santriwati')->latest()->get(); //
+        return view('kesiswaan.penilaian.riwayat', compact('penilaians'));
     }
+    public function edit($id)
+{
+    $penilaian = Penilaian::with('santriwati')->findOrFail($id);
+    $santris = Santriwati::all();
+    return view('kesiswaan.penilaian.edit', compact('penilaian', 'santris'));
+}
 
-    public function destroy($id)
+public function update(Request $request, $id)
+{
+    $penilaian = Penilaian::findOrFail($id);
+    
+    $validated = $request->validate([
+        'santriwati_id' => 'required',
+        'tanggal' => 'required|date',
+        'angkatan' => 'required',
+        'disiplin' => 'required',
+        'k3' => 'required',
+        'tanggung_jawab' => 'required',
+        'inisiatif_kreativitas' => 'required',
+        'adab' => 'required',
+        'berterate' => 'required',
+        'kesabaran' => 'required',
+        'produktif' => 'required',
+        'mandiri' => 'required',
+        'optimis' => 'required',
+        'kejujuran' => 'required',
+        'deskripsi' => 'nullable'
+    ]);
+
+    $penilaian->update($validated);
+
+    return redirect()->route('penilaian.riwayat')->with('success', 'Data penilaian berhasil diperbarui');
+}
+public function rekap(Request $request)
     {
-        $penilaian = Penilaian::findOrFail($id);
-        $penilaian->delete();
+        // 1. Ambil filter angkatan jika ada
+        $angkatan = $request->get('angkatan');
 
-        return redirect()->back()->with('success', 'Data penilaian dihapus!');
+        // 2. Ambil data penilaian karakter dan relasi santriwati
+        $penilaians = Penilaian::with('santriwati')
+            ->when($angkatan, function($q) use ($angkatan) {
+                return $q->where('angkatan', $angkatan);
+            })
+            ->latest()
+            ->get();
+
+        // 3. Ambil daftar angkatan untuk dropdown filter
+        $allAngkatan = Santriwati::distinct()->pluck('angkatan');
+
+        // 4. Kirim ke folder penilaian, file rekap (atau penilaian.blade.php sesuai foto Anda)
+        return view('kesiswaan.penilaian.rekap', compact('penilaians', 'allAngkatan'));
     }
+public function export(Request $request)
+{
+    $angkatan = $request->get('angkatan');
+    $data = Penilaian::with('santriwati')
+        ->when($angkatan, function($q) use ($angkatan) {
+            return $q->where('angkatan', $angkatan);
+        })->latest()->get();
+
+    return Excel::download(new PenilaianExport($data), 'Rekap-Penilaian-Karakter.xlsx');
+}
+
 }

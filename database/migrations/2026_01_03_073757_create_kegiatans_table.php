@@ -13,8 +13,13 @@ return new class extends Migration
     {
         Schema::create('kegiatans', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_kegiatan'); // Contoh: Sholat Dzuhur
-        $table->time('jam');             // Contoh: 12:00
+            $table->string('nama_kegiatan'); // Pastikan hanya ada satu baris ini
+        $table->time('jam'); 
+        $table->date('tanggal'); // Sesuai alur pembuatan presensi 
+        $table->string('angkatan'); // Untuk rekap per angkatan [cite: 11]
+        $table->string('ustadzah_1')->nullable(); // Ustadzah yang membersamai 
+        $table->string('ustadzah_2')->nullable();
+        $table->string('ustadzah_3')->nullable();
             $table->timestamps();
         });
     }

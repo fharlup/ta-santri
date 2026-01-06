@@ -16,52 +16,54 @@ class PresensiController extends Controller
     }
 
 public function checkRfid(Request $request)
-{
-    $santri = Santriwati::where('rfid_id', $request->rfid_id)->first();
-    if (!$santri) return response()->json(['success' => false, 'message' => 'Kartu Tidak Sah!']);
+    {
+        $santri = Santriwati::where('rfid_id', $request->rfid_id)->first();
+        if (!$santri) return response()->json(['success' => false, 'message' => 'Kartu Tidak Sah!']);
 
-    $now = Carbon::now();
-    $kegiatan = Kegiatan::whereTime('jam', '>=', $now->copy()->subMinutes(45)->format('H:i:s'))
-                        ->whereTime('jam', '<=', $now->copy()->addMinutes(60)->format('H:i:s'))
-                        ->first();
+        $now = Carbon::now();
+        // Mencari kegiatan berdasarkan waktu saat ini [cite: 16]
+        $kegiatan = Kegiatan::whereDate('tanggal', Carbon::today())
+                            ->whereTime('jam', '>=', $now->copy()->subMinutes(45)->format('H:i:s'))
+                            ->whereTime('jam', '<=', $now->copy()->addMinutes(60)->format('H:i:s'))
+                            ->first();
 
-    if (!$kegiatan) return response()->json(['success' => false, 'message' => 'Tidak ada jadwal!']);
+        if (!$kegiatan) return response()->json(['success' => false, 'message' => 'Tidak ada jadwal aktif!']);
 
-    $jadwal = Carbon::parse($kegiatan->jam);
-    $status = $now->gt($jadwal->addMinutes(15)) ? 'Terlambat' : 'Tepat Waktu';
+        // LOGIKA BARU: Toleransi 10 Menit [cite: 12, 13]
+        $waktuMulai = Carbon::parse($kegiatan->jam);
+        $batasToleransi = $waktuMulai->copy()->addMinutes(10);
+        
+        // Status: HADIR atau TELAT [cite: 18]
+        $status = $now->gt($batasToleransi) ? 'TELAT' : 'HADIR';
 
-    // JIKA TERLAMBAT: Pastikan NIM dan KELAS tetap dikirim ke FE
-    if ($status === 'Terlambat' && !$request->filled('keterangan')) {
+        // Minta keterangan jika TELAT 
+        if ($status === 'TELAT' && !$request->filled('keterangan')) {
+            return response()->json([
+                'success' => true,
+                'require_keterangan' => true,
+                'nama' => $santri->nama_lengkap,
+                'nim' => $santri->nim,
+                'kelas' => $santri->kelas,
+                'status' => 'TELAT'
+            ]);
+        }
+
+        $presensi = Presensi::create([
+            'santriwati_id' => $santri->id,
+            'kegiatan_id' => $kegiatan->id,
+            'waktu_scan' => $now,
+            'status' => $status,
+            'keterangan' => $request->keterangan
+        ]);
+
         return response()->json([
             'success' => true,
-            'require_keterangan' => true,
             'nama' => $santri->nama_lengkap,
-            'nim' => $santri->nim,   // Tambahkan ini agar tidak undefined
-            'kelas' => $santri->kelas, // Tambahkan ini agar tidak undefined
-            'status' => 'Terlambat'
+            'status' => $status,
+            'kegiatan' => $kegiatan->nama_kegiatan,
+            'waktu' => $now->format('H:i:s')
         ]);
     }
-
-    // SIMPAN DATA
-    Presensi::create([
-        'santriwati_id' => $santri->id,
-        'kegiatan_id' => $kegiatan->id,
-        'waktu_scan' => $now,
-        'status' => $status,
-        'keterangan' => $request->keterangan
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'require_keterangan' => false,
-        'nama' => $santri->nama_lengkap,
-        'nim' => $santri->nim,   // Pastikan NIM dikirim
-        'kelas' => $santri->kelas, // Pastikan KELAS dikirim
-        'kegiatan' => $kegiatan->nama_kegiatan,
-        'waktu' => $now->format('H:i:s'),
-        'status' => $status
-    ]);
-}
 public function riwayat(Request $request)
 {
     $query = Presensi::with(['santriwati', 'kegiatan']);
@@ -113,5 +115,26 @@ public function update(Request $request, $id)
 
     // 4. Redirect kembali ke Riwayat dengan pesan sukses
     return redirect()->route('presensi.riwayat')->with('success', 'Presensi ' . $presensi->santriwati->nama_lengkap . ' berhasil diupdate');
+}
+public function rekap()
+{
+    // Ini adalah contoh logika pengambilan data. 
+    // Anda bisa menyesuaikan query ini dengan struktur tabel Anda.
+    // Gunakan 'santriwatis' dan 'presensis' sesuai foto database
+  $data_rekap = \DB::table('santriwatis')
+        ->leftJoin('presensis', 'santriwatis.id', '=', 'presensis.santriwati_id')
+        ->select(
+            // Ganti 'nama' menjadi 'nama_lengkap' sesuai struktur tabel Anda
+            'santriwatis.nama_lengkap as nama_santri', 
+            \DB::raw('SUM(CASE WHEN presensis.status = "hadir" THEN 1 ELSE 0 END) as hadir'),
+            \DB::raw('SUM(CASE WHEN presensis.status = "izin" THEN 1 ELSE 0 END) as izin'),
+            \DB::raw('SUM(CASE WHEN presensis.status = "sakit" THEN 1 ELSE 0 END) as sakit'),
+            \DB::raw('SUM(CASE WHEN presensis.status = "alpa" THEN 1 ELSE 0 END) as alpa')
+        )
+        // Pastikan di groupBy juga menggunakan 'nama_lengkap'
+        ->groupBy('santriwatis.id', 'santriwatis.nama_lengkap') 
+        ->get();
+
+    return view('kesiswaan.presensi.rekap', compact('data_rekap'));
 }
 }
