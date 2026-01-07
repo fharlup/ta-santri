@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-full mx-auto pb-10">
+<div class="max-w-full mx-auto pb-10 px-4 sm:px-6 lg:px-8">
     {{-- HEADER --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
         <div class="flex items-center space-x-5">
@@ -31,7 +31,7 @@
                 <select name="angkatan" class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
                     <option value="">Semua Angkatan</option>
                     @foreach($allAngkatan as $a)
-                        <option value="{{ $a }}" {{ request('angkatan') == $a ? 'selected' : '' }}>{{ $a }}</option>
+                        <option value="{{ $a }}" {{ request('angkatan') == $a ? 'selected' : '' }}>Angkatan {{ $a }}</option>
                     @endforeach
                 </select>
             </div>
@@ -57,7 +57,7 @@
 
     {{-- TABEL DATA --}}
     <div class="bg-white rounded-[50px] shadow-2xl border-t-[15px] border-[#473829] overflow-hidden">
-        <div class="overflow-x-auto custom-scrollbar">
+        <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
                     <tr class="bg-gray-50/80 border-b">
@@ -76,9 +76,12 @@
                         <td class="px-8 py-6 sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-sm">
                             <p class="font-black text-[#473829] uppercase text-sm leading-tight">{{ $p->santriwati->nama_lengkap }}</p>
                             <span class="text-[9px] font-bold text-gray-300 uppercase italic">
-                                {{ $p->angkatan }} | {{ $p->tanggal->format('d/m/Y') }}
+                                Angkatan {{ $p->santriwati->angkatan }} | 
+                                {{ \Carbon\Carbon::parse($p->tanggal)->format('d/m/Y') }}
                             </span>
                         </td>
+                        
+                        {{-- Looping Kategori Penilaian --}}
                         @foreach(['adab', 'disiplin', 'tanggung_jawab', 'integritas_kesabaran', 'integritas_kejujuran'] as $field)
                         <td class="px-4 py-6 text-center">
                             @php
@@ -86,18 +89,23 @@
                                 $color = $val == 'A' ? 'bg-green-100 text-green-600' : ($val == 'C' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500');
                             @endphp
                             <span class="inline-block w-8 h-8 leading-8 rounded-lg font-black text-xs {{ $color }}">
-                                {{ $val }}
+                                {{ $val ?? '-' }}
                             </span>
                         </td>
                         @endforeach
+
                         <td class="px-6 py-6 text-center">
-                            <a href="{{ route('penilaian.edit', $p->id) }}" class="text-[#473829] hover:text-[#1B763B]">
+                            <a href="{{ route('penilaian.edit', $p->id) }}" class="text-[#473829] hover:text-[#1B763B] transition">
                                 <i class="ph ph-note-pencil text-xl"></i>
                             </a>
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="7" class="px-8 py-20 text-center text-gray-400 font-bold italic uppercase text-xs">Data tidak ditemukan pada filter ini.</td></tr>
+                    <tr>
+                        <td colspan="7" class="px-8 py-20 text-center text-gray-400 font-bold italic uppercase text-xs">
+                            Data tidak ditemukan pada filter ini.
+                        </td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>

@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Penilaian extends Model
 {
     protected $fillable = [
-      'santriwati_id', 'tanggal', 'angkatan',
+      'santriwati_id',
+      'user_id', 
+      
+      'tanggal', 'angkatan',
     'disiplin', 'k3', 'tanggung_jawab', 
     'inisiatif_kreatifitas', // Pakai 'f' sesuai migration Anda
     'adab', 'berterate',
@@ -18,7 +21,20 @@ class Penilaian extends Model
         protected $casts = [
         'tanggal' => 'date',
     ];
-    public function santriwati() {
-        return $this->belongsTo(Santriwati::class);
+    /**
+     * Relasi ke model Santriwati
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
+
+    /**
+     * Relasi ke model Santriwati
+     */
+    public function santriwati(): BelongsTo
+    {
+        return $this->belongsTo(Santriwati::class, 'santriwati_id');
+    }
+    
 }

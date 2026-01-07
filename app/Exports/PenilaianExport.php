@@ -1,40 +1,53 @@
 <?php
-
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\{FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles};
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class PenilaianExport implements FromCollection, WithHeadings, WithMapping
+class PenilaianExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
     protected $data;
+    protected $listUstadzah;
 
-    public function __construct($data) {
+    public function __construct($data, $listUstadzah)
+    {
         $this->data = $data;
+        $this->listUstadzah = $listUstadzah;
     }
 
-    public function collection() {
-        return $this->data;
+    public function collection()
+    {
+        return collect($this->data);
     }
 
-    public function headings(): array {
+    public function headings(): array
+    {
+        // Header otomatis: Nama, Angkatan, [Nama-Nama Ustadzah], Total Akhir
+        return array_merge(['Nama Santriwati', 'Angkatan'], $this->listUstadzah, ['Total Akumulasi']);
+    }
+
+    public function map($row): array
+    {
+        $mapped = [$row['nama'], $row['angkatan']];
+        $totalPoinSantri = 0;
+
+        foreach ($this->listUstadzah as $nama) {
+            $nilai = $row[$nama] ?? 0;
+            $mapped[] = $nilai;
+            $totalPoinSantri += $nilai;
+        }
+
+        $mapped[] = $totalPoinSantri;
+        return $mapped;
+    }
+
+    public function styles(Worksheet $sheet)
+    {
         return [
-            'Nama Santriwati', 'Angkatan', 'Tanggal', 'Disiplin', 'K3', 'T.Jawab', 
-            'Kreatifitas', 'Adab', 'Berterate', 'Kesabaran', 'Produktif', 
-            'Mandiri', 'Optimis', 'Kejujuran', 'Deskripsi'
-        ];
-    }
-
-    public function map($p): array {
-        return [
-            $p->santriwati->nama_lengkap,
-            $p->angkatan,
-            $p->tanggal->format('d/m/Y'),
-            $p->disiplin, $p->k3, $p->tanggung_jawab, $p->inisiatif_kreatifitas,
-            $p->adab, $p->berterate, $p->integritas_kesabaran, $p->integritas_produktif,
-            $p->integritas_mandiri, $p->integritas_optimis, $p->integritas_kejujuran,
-            $p->deskripsi
+            1 => [
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '1B763B']]
+            ],
         ];
     }
 }

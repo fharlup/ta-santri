@@ -10,6 +10,7 @@ use App\Exports\PenilaianExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Presensi;
 use Carbon\Carbon;
+use App\Models\User;          // Tambahkan ini
 class PenilaianController extends Controller
 {
     public function create()
@@ -81,37 +82,73 @@ public function update(Request $request, $id)
 
     return redirect()->route('penilaian.riwayat')->with('success', 'Data penilaian berhasil diperbarui');
 }
+
+public function export(Request $request)
+{
+    // 1. Ambil daftar User (Ustadzah) agar kolom otomatis bertambah
+    $listUstadzah = User::whereIn('role', ['Kesiswaan', 'Komdis', 'Wali Kelas'])
+                    ->get(['id', 'nama_lengkap']);
+
+    // 2. Ambil data Santri dengan filter yang sama dengan Rekap (opsional)
+    $querySantri = Santriwati::query();
+    if ($request->filled('angkatan')) {
+        $querySantri->where('angkatan', $request->angkatan);
+    }
+    $santris = $querySantri->get();
+
+    $exportData = [];
+    $filterTanggal = $request->input('tanggal');
+
+    foreach ($santris as $santri) {
+        $row = [
+            'nama' => $santri->nama_lengkap,
+            'angkatan' => $santri->angkatan,
+        ];
+
+        foreach ($listUstadzah as $ustadzah) {
+            $queryPenilaian = Penilaian::where('santriwati_id', $santri->id)
+                ->where('user_id', $ustadzah->id);
+
+            if ($filterTanggal) {
+                $queryPenilaian->whereDate('tanggal', $filterTanggal);
+            }
+
+            // Jumlahkan semua kategori kategori (Dinamis)
+            $row[$ustadzah->nama_lengkap] = $queryPenilaian->selectRaw('SUM(disiplin + k3 + tanggung_jawab + inisiatif_kreatifitas + adab + berterate + integritas_kesabaran + integritas_produktif + integritas_mandiri + integritas_optimis + integritas_kejujuran) as total')
+                ->value('total') ?? 0;
+        }
+        $exportData[] = $row;
+    }
+
+    // 3. Nama File & Download
+    $namaFile = 'Rekap-Penilaian-' . now()->format('d-m-Y') . '.xlsx';
+    $namaUstadzahOnly = $listUstadzah->pluck('nama_lengkap')->toArray();
+
+    return Excel::download(new PenilaianExport($exportData, $namaUstadzahOnly), $namaFile);
+}
 public function rekap(Request $request)
 {
-    // 1. Tangkap filter dari URL
-    $angkatan = $request->get('angkatan');
-    $tanggal  = $request->get('tanggal');
+    // 1. Ambil pilihan Angkatan asli dari tabel santriwatis
+    $allAngkatan = \App\Models\Santriwati::distinct()->pluck('angkatan');
 
-    // 2. Query data dengan filter
-    $penilaians = Penilaian::with('santriwati')
-        ->when($angkatan, function($q) use ($angkatan) {
-            return $q->where('angkatan', $angkatan);
-        })
-        ->when($tanggal, function($q) use ($tanggal) {
-            return $q->whereDate('tanggal', $tanggal);
-        })
-        ->latest()
-        ->get();
+    // 2. Query data penilaian asli dengan Eager Loading agar tidak berat
+    $query = \App\Models\Penilaian::with(['santriwati', 'user']);
 
-    // 3. Ambil daftar angkatan untuk isi dropdown
-    $allAngkatan = Santriwati::distinct()->pluck('angkatan');
+    // 3. Filter Angkatan (Hanya jika user memilih di dropdown)
+    if ($request->filled('angkatan')) {
+        $query->whereHas('santriwati', function($q) use ($request) {
+            $q->where('angkatan', $request->angkatan);
+        });
+    }
+
+    // 4. Filter Tanggal (Hanya jika user memilih tanggal)
+    if ($request->filled('tanggal')) {
+        $query->whereDate('tanggal', $request->tanggal);
+    }
+
+    // 5. Ambil data asli, urutkan dari yang terbaru
+    $penilaians = $query->latest('tanggal')->get();
 
     return view('kesiswaan.penilaian.rekap', compact('penilaians', 'allAngkatan'));
 }
-public function export(Request $request)
-{
-    $angkatan = $request->get('angkatan');
-    $data = Penilaian::with('santriwati')
-        ->when($angkatan, function($q) use ($angkatan) {
-            return $q->where('angkatan', $angkatan);
-        })->latest()->get();
-
-    return Excel::download(new PenilaianExport($data), 'Rekap-Penilaian-Karakter.xlsx');
-}
-
 }

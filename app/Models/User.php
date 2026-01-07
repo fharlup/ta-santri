@@ -49,4 +49,8 @@ public function logs() {
             'password' => 'hashed',
         ];
     }
+    public function penilaians()
+{
+    return $this->hasMany(Penilaian::class, 'user_id');
+}
 }
