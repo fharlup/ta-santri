@@ -9,7 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatabl;
 class Santriwati extends Model
 {
     protected $fillable = [
-        'nama_lengkap', 'username', 'password', 'kelas', 'angkatan', 'rfid_id'
+        'nama_lengkap', 'nim','username', 'password', 'kelas', 'angkatan', 'rfid_id',
     ];
 
     // Menghubungkan ke data absen

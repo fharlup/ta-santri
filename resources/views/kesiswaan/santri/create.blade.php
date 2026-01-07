@@ -1,67 +1,86 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-5xl mx-auto">
-    <div class="mb-8">
-        <h1 class="font-berkshire text-4xl text-[#473829]">Manajemen Santriwati</h1>
-        <p class="text-gray-500">Silakan lengkapi data santriwati dan akun akses sistem.</p>
+<div class="max-w-4xl mx-auto pb-12">
+    <div class="flex items-center space-x-4 mb-10">
+        <div class="w-2 h-10 bg-[#1B763B] rounded-full"></div>
+        <h1 class="font-berkshire text-4xl text-[#473829]">Pendaftaran Santriwati</h1>
     </div>
 
-    <div class="bg-white rounded-[35px] shadow-sm border-t-8 border-[#1B763B] p-12">
-        <h2 class="font-berkshire text-2xl text-[#473829] mb-10 text-center md:text-left">Tambah Santriwati</h2>
-
+    <div class="bg-white rounded-[50px] shadow-2xl border-t-[15px] border-[#1B763B] p-12">
         <form action="{{ route('santri.store') }}" method="POST" class="space-y-6">
             @csrf
             
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#473829]">Nama Lengkap</label>
-                <input type="text" name="nama_lengkap" required 
-                    class="col-span-12 md:col-span-9 border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3 focus:border-[#1B763B] focus:bg-white outline-none transition">
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="grid grid-cols-12 gap-4 items-center">
-                    <label class="col-span-12 md:col-span-4 text-lg font-bold text-[#473829]">NIM</label>
-                    <input type="text" name="nim" required class="col-span-12 md:col-span-8 border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {{-- Nama Lengkap --}}
+                <div class="md:col-span-2 space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Nama Lengkap</label>
+                    <input type="text" name="nama_lengkap" placeholder="CONTOH: AISYAH HUMAIRA" required 
+                        class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#1B763B] outline-none font-bold text-[#473829] transition uppercase">
                 </div>
-                <div class="grid grid-cols-12 gap-4 items-center">
-                    <label class="col-span-12 md:col-span-4 text-lg font-bold text-[#1B763B] text-right pr-2">Username</label>
-                    <input type="text" name="username" required class="col-span-12 md:col-span-8 border-2 border-[#1B763B]/20 bg-[#1B763B]/5 rounded-2xl px-6 py-3">
+
+                {{-- Username --}}
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Username (Untuk Login)</label>
+                    <div class="relative">
+                        <i class="ph ph-user absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 text-xl"></i>
+                        <input type="text" name="username" placeholder="aisyah2024" required 
+                            class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl pl-14 pr-6 py-4 focus:border-[#1B763B] outline-none font-bold text-[#473829] transition">
+                    </div>
                 </div>
-            </div>
 
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#1B763B]">Password</label>
-                <input type="password" name="password" required placeholder="Minimal 6 karakter"
-                    class="col-span-12 md:col-span-9 border-2 border-[#1B763B]/20 bg-[#1B763B]/5 rounded-2xl px-6 py-3 outline-none">
-            </div>
-
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#473829]">Kelas</label>
-                <div class="col-span-12 md:col-span-9 relative">
-                    <select name="kelas" required class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3 outline-none appearance-none">
-                        <option value="">-- Pilih kelas --</option>
-                        <option value="10-A">10-A</option>
-                        <option value="11-B">11-B</option>
-                    </select>
-                    <div class="absolute right-6 top-4 pointer-events-none text-gray-400">▼</div>
+                {{-- Password --}}
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Password</label>
+                    <div class="relative">
+                        <i class="ph ph-key-hole absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 text-xl"></i>
+                        <input type="password" name="password" placeholder="••••••••" required 
+                            class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl pl-14 pr-6 py-4 focus:border-[#1B763B] outline-none font-bold text-[#473829] transition">
+                    </div>
                 </div>
-            </div>
+                <div class="space-y-2">
+    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">NIM / Nomor Induk</label>
+    <input type="text" name="nim" placeholder="Contoh: 12345" required 
+        class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#1B763B] outline-none font-bold">
+</div>
 
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#473829]">RFid</label>
-                <input type="text" name="rfid_id" placeholder="Input Id Kartu" required
-                    class="col-span-12 md:col-span-9 border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3 italic outline-none">
+                {{-- RFID ID --}}
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">ID Kartu (RFID ID)</label>
+                    <div class="relative">
+                        <i class="ph ph-barcode absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 text-xl"></i>
+                        <input type="text" name="rfid_id" placeholder="Tap kartu..." required 
+                            class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl pl-14 pr-6 py-4 focus:border-[#1B763B] outline-none font-mono font-bold text-[#473829] transition">
+                    </div>
+                </div>
+
+                {{-- Angkatan & Kelas (Row) --}}
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Angkatan</label>
+                        <select name="angkatan" required class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#1B763B] outline-none font-bold text-[#473829] appearance-none transition">
+                            <option value="">-- Pilih --</option>
+                            @foreach($angkatans as $a)
+                                <option value="{{ $a->nama_angkatan }}">{{ $a->nama_angkatan }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Kelas</label>
+                        <select name="kelas" required class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#1B763B] outline-none font-bold text-[#473829] appearance-none transition">
+                            <option value="">-- Pilih --</option>
+                            @foreach($kelas as $k)
+                                <option value="{{ $k->nama_kelas }}">{{ $k->nama_kelas }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="flex justify-end space-x-4 pt-10">
-                <a href="{{ route('kesiswaan.dashboard') }}" 
-                   class="px-10 py-3 text-gray-400 font-bold hover:text-[#473829] transition">
-                    Batal
-                </a>
-                <button type="submit" 
-                    class="px-12 py-3 bg-[#1B763B] text-white rounded-2xl font-bold shadow-lg shadow-green-900/20 hover:bg-[#473829] transition transform hover:-translate-y-1">
-                    Simpan Santriwati
+                <a href="{{ route('santri.index') }}" class="px-8 py-4 text-gray-400 font-bold uppercase text-xs tracking-widest hover:text-red-500 transition">Batal</a>
+                <button type="submit" class="bg-[#1B763B] text-white px-12 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#473829] transition transform hover:-translate-y-1">
+                    <i class="ph ph-user-plus mr-2"></i> Daftarkan Santriwati
                 </button>
             </div>
         </form>

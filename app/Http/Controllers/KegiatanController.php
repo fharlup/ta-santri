@@ -10,35 +10,91 @@ use Illuminate\Support\Facades\Auth;
 class KegiatanController extends Controller
 {
     // FR-02 & FR-08: Melihat daftar kegiatan
-   public function index() {
-        $kegiatans = Kegiatan::orderBy('jam', 'asc')->get();
-        return view('kesiswaan.kegiatan.index', compact('kegiatans'));
-    }
+public function index()
+    {
+        // Hanya tampilkan jadwal unik berdasarkan nama dan jam
+     
+     
+        // ATAU filter berdasarkan tanggal hari ini:
+        $kegiatans = Kegiatan::orderBy('jam', 'asc')
+        ->get()
+        ->unique(function ($item) {
+            // Gabungkan nama dan jam sebagai kunci unik
+            return $item->nama_kegiatan . $item->jam;
+        });
 
+    return view('kesiswaan.kegiatan.index', compact('kegiatans'));
+    }
     public function create() {
         return view('kesiswaan.kegiatan.create');
     }
 
-    public function store(Request $request) {
-        $request->validate([
-            'nama_kegiatan' => 'required|string|max:255',
-            'jam' => 'required'
+   public function store(Request $request)
+{
+    // 1. Validasi: Tanggal sekarang bersifat nullable (opsional)
+    $request->validate([
+        'nama_kegiatan' => 'required|string',
+        'jam'           => 'required',
+        'tanggal'       => 'nullable|date',
+        'ustadzah_1'    => 'nullable|string',
+        'ustadzah_2'    => 'nullable|string',
+        'ustadzah_3'    => 'nullable|string',
+    ]);
+
+    try {
+        // 2. Simpan ke database
+        Kegiatan::create([
+            'nama_kegiatan' => strtoupper($request->nama_kegiatan),
+            'jam'           => $request->jam,
+            // Jika tanggal kosong, otomatis isi dengan tanggal hari ini
+            'tanggal'       => $request->tanggal ?? now()->format('Y-m-d'), 
+            // Angkatan dihapus dari form, jadi kita beri default "Semua"
+            'angkatan'      => 'Semua', 
+            'ustadzah_1'    => $request->ustadzah_1,
+            'ustadzah_2'    => $request->ustadzah_2,
+            'ustadzah_3'    => $request->ustadzah_3,
         ]);
 
-        Kegiatan::create($request->all());
-        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil ditambah');
+        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil disimpan!');
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Gagal simpan: ' . $e->getMessage());
     }
+}
 
     public function edit($id) {
         $kegiatan = Kegiatan::findOrFail($id);
         return view('kesiswaan.kegiatan.edit', compact('kegiatan'));
     }
 
-    public function update(Request $request, $id) {
-        $kegiatan = Kegiatan::findOrFail($id);
-        $kegiatan->update($request->all());
-        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil diupdate');
+   public function update(Request $request, $id)
+{
+    $request->validate([
+        'nama_kegiatan' => 'required|string',
+        'jam'           => 'required',
+        'tanggal'       => 'nullable|date',
+        'ustadzah_1'    => 'nullable|string',
+        'ustadzah_2'    => 'nullable|string',
+        'ustadzah_3'    => 'nullable|string',
+    ]);
+
+    $kegiatan = Kegiatan::findOrFail($id);
+
+    try {
+        $kegiatan->update([
+            'nama_kegiatan' => strtoupper($request->nama_kegiatan),
+            'jam'           => $request->jam,
+            'tanggal'       => $request->tanggal ?? $kegiatan->tanggal ?? now()->format('Y-m-d'),
+            'angkatan'      => 'Semua', // Tetap set "Semua" agar konsisten
+            'ustadzah_1'    => $request->ustadzah_1,
+            'ustadzah_2'    => $request->ustadzah_2,
+            'ustadzah_3'    => $request->ustadzah_3,
+        ]);
+
+        return redirect()->route('kegiatan.index')->with('success', 'Jadwal berhasil diperbarui!');
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Gagal update: ' . $e->getMessage());
     }
+}
     public function destroy($id) {
         Kegiatan::findOrFail($id)->delete();
         return redirect()->route('kegiatan.index')->with('success', 'Kegiatan dihapus');

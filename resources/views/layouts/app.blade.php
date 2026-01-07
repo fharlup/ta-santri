@@ -77,6 +77,14 @@
                class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*santri*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
                 <i class="ph ph-users-four mr-3 text-xl"></i> Manajemen Santriwati
             </a>
+            <a href="{{ route('user.index') }}" 
+   class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*user*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+    <i class="ph ph-user-gear mr-3 text-xl"></i> Manajemen Pengguna
+</a>
+<a href="{{ route('master.index') }}" 
+   class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*master-data*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+    <i class="ph ph-list-numbers mr-3 text-xl"></i> Master Angkatan & Kelas
+</a>
 <a href="{{ route('presensi.export') }}" 
    class="flex items-center px-4 py-3 rounded-2xl transition-all text-white/60 hover:bg-[#8BC53F] hover:text-white shadow-sm">
     <i class="ph ph-file-xls mr-3 text-xl text-[#8BC53F] group-hover:text-white"></i> 

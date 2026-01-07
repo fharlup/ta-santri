@@ -27,6 +27,7 @@ class UserController extends Controller
 
         User::create([
             'nama_lengkap' => $request->nama_lengkap,
+            'email'    => $request->username . '@tunasquran.com',
             'username' => $request->username,
             'password' => Hash::make($request->password),
             'role' => $request->role,

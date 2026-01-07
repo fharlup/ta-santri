@@ -82,24 +82,27 @@ public function update(Request $request, $id)
     return redirect()->route('penilaian.riwayat')->with('success', 'Data penilaian berhasil diperbarui');
 }
 public function rekap(Request $request)
-    {
-        // 1. Ambil filter angkatan jika ada
-        $angkatan = $request->get('angkatan');
+{
+    // 1. Tangkap filter dari URL
+    $angkatan = $request->get('angkatan');
+    $tanggal  = $request->get('tanggal');
 
-        // 2. Ambil data penilaian karakter dan relasi santriwati
-        $penilaians = Penilaian::with('santriwati')
-            ->when($angkatan, function($q) use ($angkatan) {
-                return $q->where('angkatan', $angkatan);
-            })
-            ->latest()
-            ->get();
+    // 2. Query data dengan filter
+    $penilaians = Penilaian::with('santriwati')
+        ->when($angkatan, function($q) use ($angkatan) {
+            return $q->where('angkatan', $angkatan);
+        })
+        ->when($tanggal, function($q) use ($tanggal) {
+            return $q->whereDate('tanggal', $tanggal);
+        })
+        ->latest()
+        ->get();
 
-        // 3. Ambil daftar angkatan untuk dropdown filter
-        $allAngkatan = Santriwati::distinct()->pluck('angkatan');
+    // 3. Ambil daftar angkatan untuk isi dropdown
+    $allAngkatan = Santriwati::distinct()->pluck('angkatan');
 
-        // 4. Kirim ke folder penilaian, file rekap (atau penilaian.blade.php sesuai foto Anda)
-        return view('kesiswaan.penilaian.rekap', compact('penilaians', 'allAngkatan'));
-    }
+    return view('kesiswaan.penilaian.rekap', compact('penilaians', 'allAngkatan'));
+}
 public function export(Request $request)
 {
     $angkatan = $request->get('angkatan');

@@ -9,6 +9,9 @@ use App\Http\Controllers\KesiswaanController;
 use App\Http\Controllers\PenilaianController;
 use App\Http\Controllers\PresensiController;
 
+use App\Http\Controllers\MasterTambahanController;
+
+
 /*
 |--------------------------------------------------------------------------
 | SI-DISIPLIN Tunas Qur'an - Routes
@@ -43,7 +46,7 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:Kesiswaan')->prefix('kesiswaan')->group(function () {
-
+        Route::resource('users', UserController::class);
         /* ===== DASHBOARD ===== */
         Route::get('/dashboard', [DataMasterController::class, 'dashboard'])
             ->name('kesiswaan.dashboard');
@@ -129,4 +132,11 @@ Route::middleware('auth')->group(function () {
         });
 
     });
+    Route::prefix('master-data')->group(function () {
+    Route::get('/', [MasterTambahanController::class, 'index'])->name('master.index');
+    Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('master.angkatan.store');
+    Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('master.kelas.store');
+    Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('master.angkatan.destroy');
+    Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('master.kelas.destroy');
+});
 });

@@ -1,81 +1,75 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-5xl mx-auto">
-    <div class="flex items-center justify-between mb-8">
-        <h1 class="font-berkshire text-4xl text-[#473829]">Edit Santriwati</h1>
-        {{-- Tombol kembali mengarah ke halaman index (daftar) --}}
-        <a href="{{ route('santri.index') }}" class="text-[#1B763B] font-bold hover:underline">← Kembali ke Daftar</a>
+<div class="max-w-4xl mx-auto pb-12">
+    <div class="flex items-center space-x-4 mb-10">
+        <div class="w-2 h-10 bg-[#473829] rounded-full"></div>
+        <h1 class="font-berkshire text-4xl text-[#473829]">Edit Data Santriwati</h1>
     </div>
 
-    <div class="bg-white rounded-[35px] shadow-sm border-t-8 border-[#1B763B] p-12">
-        <h2 class="font-berkshire text-2xl text-[#473829] mb-10 text-center md:text-left">
-            Perbarui Data: {{ $santri->nama_lengkap }}
-        </h2>
-
-        {{-- Perhatikan action route dan method POST --}}
+    <div class="bg-white rounded-[50px] shadow-2xl border-t-[15px] border-[#473829] p-12">
         <form action="{{ route('santri.update', $santri->id) }}" method="POST" class="space-y-6">
             @csrf
-            {{-- WAJIB: Method Spoofing untuk Update (PUT) --}}
             @method('PUT')
             
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#473829]">Nama Lengkap</label>
-                {{-- value diisi dengan data lama ($santri->nama_lengkap) --}}
-                <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap', $santri->nama_lengkap) }}" required 
-                    class="col-span-12 md:col-span-9 border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3 focus:border-[#1B763B] focus:bg-white outline-none transition">
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="grid grid-cols-12 gap-4 items-center">
-                    <label class="col-span-12 md:col-span-4 text-lg font-bold text-[#473829]">NIM</label>
-                    <input type="text" name="nim" value="{{ old('nim', $santri->nim) }}" required 
-                        class="col-span-12 md:col-span-8 border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {{-- Nama Lengkap --}}
+                <div class="md:col-span-2 space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Nama Lengkap</label>
+                    <input type="text" name="nama_lengkap" value="{{ $santri->nama_lengkap }}" required 
+                        class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#473829] outline-none font-bold text-[#473829] transition uppercase">
                 </div>
-                <div class="grid grid-cols-12 gap-4 items-center">
-                    <label class="col-span-12 md:col-span-4 text-lg font-bold text-[#1B763B] text-right pr-2">Username</label>
-                    <input type="text" name="username" value="{{ old('username', $santri->username) }}" required 
-                        class="col-span-12 md:col-span-8 border-2 border-[#1B763B]/20 bg-[#1B763B]/5 rounded-2xl px-6 py-3">
-                </div>
-            </div>
 
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#1B763B]">Password Baru</label>
-                <div class="col-span-12 md:col-span-9">
-                    <input type="password" name="password" placeholder="Biarkan kosong jika tidak ingin mengubah password"
-                        class="w-full border-2 border-[#1B763B]/20 bg-[#1B763B]/5 rounded-2xl px-6 py-3 outline-none mb-2">
-                    <p class="text-xs text-gray-400 italic">*Isi hanya jika ingin mereset password santri ini.</p>
+                {{-- Username --}}
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Username</label>
+                    <input type="text" name="username" value="{{ $santri->username }}" required 
+                        class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#473829] outline-none font-bold text-[#473829] transition">
                 </div>
-            </div>
 
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#473829]">Kelas</label>
-                <div class="col-span-12 md:col-span-9 relative">
-                    <select name="kelas" required class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3 outline-none appearance-none">
-                        <option value="">-- Pilih kelas --</option>
-                        {{-- Logika untuk memilih opsi yang sesuai dengan data database --}}
-                        <option value="10-A" {{ old('kelas', $santri->kelas) == '10-A' ? 'selected' : '' }}>10-A</option>
-                        <option value="11-B" {{ old('kelas', $santri->kelas) == '11-B' ? 'selected' : '' }}>11-B</option>
-                        <option value="12-C" {{ old('kelas', $santri->kelas) == '12-C' ? 'selected' : '' }}>12-C</option>
-                    </select>
-                    <div class="absolute right-6 top-4 pointer-events-none text-gray-400">▼</div>
+                {{-- Password (Opsional) --}}
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Ganti Password <span class="text-[8px] italic text-red-400 font-bold normal-case ml-2">(Kosongkan jika tidak diganti)</span></label>
+                    <input type="password" name="password" placeholder="••••••••" 
+                        class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#473829] outline-none font-bold text-[#473829] transition">
                 </div>
-            </div>
 
-            <div class="grid grid-cols-12 gap-4 items-center">
-                <label class="col-span-12 md:col-span-3 text-lg font-bold text-[#473829]">RFid</label>
-                <input type="text" name="rfid_id" value="{{ old('rfid_id', $santri->rfid_id) }}" placeholder="Input Id Kartu" required
-                    class="col-span-12 md:col-span-9 border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-3 italic outline-none">
+                {{-- RFID ID --}}
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">ID Kartu (RFID ID)</label>
+                    <input type="text" name="rfid_id" value="{{ $santri->rfid_id }}" required 
+                        class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#473829] outline-none font-mono font-bold text-[#473829] transition">
+                </div>
+
+                {{-- Angkatan & Kelas (Dropdown selected) --}}
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Angkatan</label>
+                        <select name="angkatan" required class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#473829] outline-none font-bold text-[#473829] transition">
+                            @foreach($angkatans as $a)
+                                <option value="{{ $a->nama_angkatan }}" {{ $santri->angkatan == $a->nama_angkatan ? 'selected' : '' }}>
+                                    {{ $a->nama_angkatan }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Kelas</label>
+                        <select name="kelas" required class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 focus:border-[#473829] outline-none font-bold text-[#473829] transition">
+                            @foreach($kelas as $k)
+                                <option value="{{ $k->nama_kelas }}" {{ $santri->kelas == $k->nama_kelas ? 'selected' : '' }}>
+                                    {{ $k->nama_kelas }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="flex justify-end space-x-4 pt-10">
-                <a href="{{ route('santri.index') }}" 
-                   class="px-10 py-3 text-gray-400 font-bold hover:text-[#473829] transition">
-                    Batal
-                </a>
-                <button type="submit" 
-                    class="px-12 py-3 bg-[#1B763B] text-white rounded-2xl font-bold shadow-lg shadow-green-900/20 hover:bg-[#473829] transition transform hover:-translate-y-1">
-                    Perbarui Data
+                <a href="{{ route('santri.index') }}" class="px-8 py-4 text-gray-400 font-bold uppercase text-xs tracking-widest hover:text-red-500 transition">Batal</a>
+                <button type="submit" class="bg-[#473829] text-white px-12 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#1B763B] transition transform hover:-translate-y-1">
+                    <i class="ph ph-check-circle mr-2"></i> Perbarui Data
                 </button>
             </div>
         </form>

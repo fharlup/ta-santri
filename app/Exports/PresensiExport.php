@@ -12,64 +12,42 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class PresensiExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
     protected $data;
+    protected $listKegiatan;
 
-    // Menerima data rekap dari Controller
-    public function __construct($data)
+    // Konstruktor sekarang menerima data rekap DAN daftar kegiatan
+    public function __construct($data, $listKegiatan)
     {
         $this->data = $data;
+        $this->listKegiatan = $listKegiatan;
     }
 
-    // Mengambil koleksi data
     public function collection()
     {
         return collect($this->data);
     }
 
-    // Menentukan Header kolom Excel 
+    // Header dinamis: Nama, Angkatan, lalu daftar kegiatan dari DB
     public function headings(): array
     {
-        return [
-            'Nama Santriwati',
-            'Angkatan',
-            'Tahajjud',
-            'Shubuh',
-            'Piket',
-            'Apel',
-            'HL Dhuha/Kuliah',
-            'Sholat Dzuhur',
-            'HL Dzuhur/Kuliah',
-            'Ashar',
-            'BA/BM',
-            'Maghrib',
-            'Isya',
-            'GH/M',
-            'Komdis'
-        ];
+        return array_merge(['Nama Santriwati', 'Angkatan'], $this->listKegiatan);
     }
 
-    // Memetakan data ke setiap kolom
+    // Mapping dinamis: Mengambil nilai berdasarkan nama kegiatan yang ada di DB
     public function map($row): array
     {
-        return [
+        $mapped = [
             $row['nama'],
             $row['angkatan'],
-            $row['TAHAJJUD'] . '%',
-            $row['SHUBUH'] . '%',
-            $row['PIKET'] . '%',
-            $row['APEL'] . '%',
-            $row['HL DHUHA/KULIAH'] . '%',
-            $row['SHOLAT DZUHUR'] . '%',
-	    ($row['HL DZUHUR/KULIAH'] ?? 0) . '%',
-            $row['ASHAR'] . '%',
-            $row['BA/BM'] . '%',
-            $row['MAGHRIB'] . '%',
-            $row['ISYA'] . '%',
-            $row['GH/M'] . '%',
-            $row['KOMDIS'] . '%'
         ];
+
+        // Looping untuk mengisi kolom kegiatan secara otomatis
+        foreach ($this->listKegiatan as $keg) {
+            $mapped[] = ($row[$keg] ?? 0) . '%';
+        }
+
+        return $mapped;
     }
 
-    // Memberikan gaya/styling pada header agar rapi
     public function styles(Worksheet $sheet)
     {
         return [
@@ -77,7 +55,7 @@ class PresensiExport implements FromCollection, WithHeadings, WithMapping, Shoul
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '473829'] // Warna Cokelat Tunas Qur'an
+                    'startColor' => ['rgb' => '473829']
                 ]
             ],
         ];

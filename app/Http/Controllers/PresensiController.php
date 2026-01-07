@@ -14,56 +14,57 @@ class PresensiController extends Controller
     {
         return view('kesiswaan.presensi.scan');
     }
-
 public function checkRfid(Request $request)
-    {
-        $santri = Santriwati::where('rfid_id', $request->rfid_id)->first();
-        if (!$santri) return response()->json(['success' => false, 'message' => 'Kartu Tidak Sah!']);
+{
+    $santri = Santriwati::where('rfid', $request->rfid)->first();
+    $kegiatan = Kegiatan::find($request->kegiatan_id);
 
-        $now = Carbon::now();
-        // Mencari kegiatan berdasarkan waktu saat ini [cite: 16]
-        $kegiatan = Kegiatan::whereDate('tanggal', Carbon::today())
-                            ->whereTime('jam', '>=', $now->copy()->subMinutes(45)->format('H:i:s'))
-                            ->whereTime('jam', '<=', $now->copy()->addMinutes(60)->format('H:i:s'))
-                            ->first();
-
-        if (!$kegiatan) return response()->json(['success' => false, 'message' => 'Tidak ada jadwal aktif!']);
-
-        // LOGIKA BARU: Toleransi 10 Menit [cite: 12, 13]
-        $waktuMulai = Carbon::parse($kegiatan->jam);
-        $batasToleransi = $waktuMulai->copy()->addMinutes(10);
-        
-        // Status: HADIR atau TELAT [cite: 18]
-        $status = $now->gt($batasToleransi) ? 'TELAT' : 'HADIR';
-
-        // Minta keterangan jika TELAT 
-        if ($status === 'TELAT' && !$request->filled('keterangan')) {
-            return response()->json([
-                'success' => true,
-                'require_keterangan' => true,
-                'nama' => $santri->nama_lengkap,
-                'nim' => $santri->nim,
-                'kelas' => $santri->kelas,
-                'status' => 'TELAT'
-            ]);
-        }
-
-        $presensi = Presensi::create([
-            'santriwati_id' => $santri->id,
-            'kegiatan_id' => $kegiatan->id,
-            'waktu_scan' => $now,
-            'status' => $status,
-            'keterangan' => $request->keterangan
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'nama' => $santri->nama_lengkap,
-            'status' => $status,
-            'kegiatan' => $kegiatan->nama_kegiatan,
-            'waktu' => $now->format('H:i:s')
-        ]);
+    if (!$santri) {
+        return redirect()->back()->with('error', 'Kartu Tidak Terdaftar!');
     }
+
+    if (!$kegiatan) {
+        return redirect()->back()->with('error', 'Tidak Ada Kegiatan Aktif!');
+    }
+
+    // --- LOGIKA OTOMATIS STATUS TELAT ---
+    $waktuScan = now();
+    $jamKegiatan = \Carbon\Carbon::parse($kegiatan->jam);
+    $batasTelat = $jamKegiatan->addMinutes(10); // Toleransi 10 menit
+
+    // Jika waktu scan sudah melewati batas toleransi
+    if ($waktuScan->greaterThan($batasTelat)) {
+        $status = 'TELAT';
+        $menitTelat = $waktuScan->diffInMinutes($jamKegiatan);
+        $keterangan = "Terlambat $menitTelat menit";
+    } else {
+        $status = 'HADIR';
+        $keterangan = "Tepat Waktu";
+    }
+    // ------------------------------------
+
+    // Cek Double Tap
+    $cek = Presensi::where('santriwati_id', $santri->id)
+                   ->where('kegiatan_id', $kegiatan->id)
+                   ->whereDate('waktu_scan', now())
+                   ->first();
+
+    if ($cek) {
+        return redirect()->back()->with('error', $santri->nama_lengkap . ' Sudah Tap sebelumnya.');
+    }
+
+    // Simpan ke Database
+    Presensi::create([
+        'santriwati_id' => $santri->id,
+        'kegiatan_id'   => $kegiatan->id,
+        'waktu_scan'    => $waktuScan,
+        'status'        => $status, // 'HADIR' atau 'TELAT' otomatis
+        'keterangan'    => $keterangan, // Detail otomatis
+    ]);
+
+    $pesan = $status == 'TELAT' ? "⚠️ $santri->nama_lengkap tercatat TELAT." : "✅ $santri->nama_lengkap tercatat HADIR.";
+    return redirect()->back()->with('success', $pesan);
+}
 public function riwayat(Request $request)
 {
     $query = Presensi::with(['santriwati', 'kegiatan']);
@@ -136,5 +137,47 @@ public function rekap()
         ->get();
 
     return view('kesiswaan.presensi.rekap', compact('data_rekap'));
+}
+public function rekapPresensi(Request $request)
+{
+    // 1. Ambil input filter
+    $angkatanFilter = $request->get('angkatan');
+    $tanggalFilter = $request->get('tanggal') ?? now()->format('Y-m-d'); // Default hari ini
+
+    // 2. Ambil daftar angkatan untuk dropdown
+    $allAngkatan = \App\Models\Angkatan::all();
+
+    // 3. Ambil daftar kegiatan (13 kegiatan utama)
+    $listKegiatan = \App\Models\Kegiatan::distinct()->pluck('nama_kegiatan');
+
+    // 4. Ambil data santri dengan filter angkatan
+    $santris = \App\Models\Santriwati::when($angkatanFilter, function($q) use ($angkatanFilter) {
+            return $q->where('angkatan', $angkatanFilter);
+        })->get();
+
+    $rekapData = [];
+
+    foreach ($santris as $s) {
+        $row = [
+            'nama' => $s->nama_lengkap,
+            'angkatan' => $s->angkatan,
+        ];
+
+        foreach ($listKegiatan as $keg) {
+            // Hitung kehadiran per kegiatan pada tanggal yang dipilih
+            $present = \App\Models\Presensi::where('santriwati_id', $s->id)
+                ->whereHas('kegiatan', function($q) use ($keg, $tanggalFilter) {
+                    $q->where('nama_kegiatan', $keg)
+                      ->whereDate('tanggal', $tanggalFilter);
+                })
+                ->whereIn('status', ['HADIR', 'TELAT'])
+                ->exists();
+
+            $row[$keg] = $present ? 100 : 0;
+        }
+        $rekapData[] = $row;
+    }
+
+    return view('kesiswaan.presensi.rekap', compact('rekapData', 'listKegiatan', 'allAngkatan'));
 }
 }
