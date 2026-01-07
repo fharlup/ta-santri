@@ -9,6 +9,8 @@ class Kegiatan extends Model
 
     protected $fillable = [
             'nama_kegiatan', // Contoh: 'Tahajjud', 'KOMDIS' [cite: 26]
+            'jam_mulai',    // Tambahkan ini
+    'jam_selesai',
         'jam',           // Waktu mulai
         'tanggal',       // Tanggal pelaksanaan 
         'angkatan',      // Angkatan yang wajib ikut 

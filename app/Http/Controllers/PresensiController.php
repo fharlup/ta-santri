@@ -10,60 +10,61 @@ use Carbon\Carbon;
 
 class PresensiController extends Controller
 {
-    public function scanPage()
-    {
-        return view('kesiswaan.presensi.scan');
-    }
 public function checkRfid(Request $request)
 {
-    $santri = Santriwati::where('rfid', $request->rfid)->first();
-    $kegiatan = Kegiatan::find($request->kegiatan_id);
+    $waktuSekarang = now();
+    $jamSekarang = $waktuSekarang->format('H:i:s');
+    $hariIni = $waktuSekarang->toDateString();
 
-    if (!$santri) {
-        return redirect()->back()->with('error', 'Kartu Tidak Terdaftar!');
-    }
+    // 1. Cari Kegiatan Aktif
+    $kegiatan = Kegiatan::whereDate('tanggal', $hariIni)
+                        ->whereRaw('jam <= ?', [$jamSekarang])
+                        ->whereRaw('ADDTIME(jam, "00:45:00") >= ?', [$jamSekarang])
+                        ->first();
 
     if (!$kegiatan) {
-        return redirect()->back()->with('error', 'Tidak Ada Kegiatan Aktif!');
+        return redirect()->back()->with('error', 'TIDAK ADA JADWAL AKTIF.');
     }
 
-    // --- LOGIKA OTOMATIS STATUS TELAT ---
-    $waktuScan = now();
-    $jamKegiatan = \Carbon\Carbon::parse($kegiatan->jam);
-    $batasTelat = $jamKegiatan->addMinutes(10); // Toleransi 10 menit
-
-    // Jika waktu scan sudah melewati batas toleransi
-    if ($waktuScan->greaterThan($batasTelat)) {
-        $status = 'TELAT';
-        $menitTelat = $waktuScan->diffInMinutes($jamKegiatan);
-        $keterangan = "Terlambat $menitTelat menit";
-    } else {
-        $status = 'HADIR';
-        $keterangan = "Tepat Waktu";
-    }
-    // ------------------------------------
-
-    // Cek Double Tap
-    $cek = Presensi::where('santriwati_id', $santri->id)
-                   ->where('kegiatan_id', $kegiatan->id)
-                   ->whereDate('waktu_scan', now())
-                   ->first();
-
-    if ($cek) {
-        return redirect()->back()->with('error', $santri->nama_lengkap . ' Sudah Tap sebelumnya.');
+    // 2. Cari Data Santri
+    $santri = Santriwati::where('rfid_id', $request->rfid)->first();
+    if (!$santri) {
+        return redirect()->back()->with('error', 'KARTU TIDAK TERDAFTAR!');
     }
 
-    // Simpan ke Database
+    // 3. LOGIKA CEK DOUBLE SCAN (Penting)
+    // Mencari apakah sudah ada data presensi untuk santri ini di kegiatan ini pada hari ini
+    $sudahAbsen = Presensi::where('santriwati_id', $santri->id)
+                        ->where('kegiatan_id', $kegiatan->id)
+                        ->whereDate('waktu_scan', $hariIni)
+                        ->first();
+
+    if ($sudahAbsen) {
+        // Jika sudah ada, kembalikan pesan informasi dan tampilkan data santri tersebut
+        return redirect()->back()->with([
+            'info' => "SANTRI SUDAH SCAN SEBELUMNYA!",
+            'last_santri' => $santri,
+            'status_absen' => $sudahAbsen->status // Menampilkan status (HADIR/TELAT) yang sudah tercatat
+        ]);
+    }
+
+    // 4. Logika Status Telat (Toleransi 10 Menit)
+    $batasHadir = \Carbon\Carbon::parse($kegiatan->jam)->addMinutes(10);
+    $status = $waktuSekarang->greaterThan($batasHadir) ? 'TELAT' : 'HADIR';
+
+    // 5. Simpan Data Baru jika belum ada
     Presensi::create([
         'santriwati_id' => $santri->id,
         'kegiatan_id'   => $kegiatan->id,
-        'waktu_scan'    => $waktuScan,
-        'status'        => $status, // 'HADIR' atau 'TELAT' otomatis
-        'keterangan'    => $keterangan, // Detail otomatis
+        'waktu_scan'    => $waktuSekarang,
+        'status'        => $status,
     ]);
 
-    $pesan = $status == 'TELAT' ? "⚠️ $santri->nama_lengkap tercatat TELAT." : "✅ $santri->nama_lengkap tercatat HADIR.";
-    return redirect()->back()->with('success', $pesan);
+    return redirect()->back()->with([
+        'success' => "BERHASIL ABSEN: $status",
+        'last_santri' => $santri,
+        'status_absen' => $status
+    ]);
 }
 public function riwayat(Request $request)
 {
@@ -179,5 +180,19 @@ public function rekapPresensi(Request $request)
     }
 
     return view('kesiswaan.presensi.rekap', compact('rekapData', 'listKegiatan', 'allAngkatan'));
+}
+public function scanPage()
+{
+    $waktuSekarang = now();
+    $jamSekarang = $waktuSekarang->format('H:i:s');
+    $hariIni = $waktuSekarang->toDateString();
+
+    // Logika pencarian kegiatan aktif (Sama dengan fungsi checkRfid)
+    $kegiatanAktif = \App\Models\Kegiatan::whereDate('tanggal', $hariIni)
+                        ->whereRaw('jam <= ?', [$jamSekarang])
+                        ->whereRaw('ADDTIME(jam, "00:45:00") >= ?', [$jamSekarang])
+                        ->first();
+
+    return view('kesiswaan.presensi.scan', compact('kegiatanAktif'));
 }
 }

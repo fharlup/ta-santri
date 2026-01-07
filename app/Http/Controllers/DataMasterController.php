@@ -14,19 +14,40 @@ class DataMasterController extends Controller
     /**
      * DASHBOARD: Menampilkan statistik utama
      */
-    public function dashboard()
-    {
-        $data = [
-            'total_santri'   => Santriwati::count(),
-            'total_pengguna' => User::count(),
-            'total_kegiatan' => Kegiatan::count(),
-            // Mengambil 5 santri yang baru didaftarkan
-            'santri_terbaru' => Santriwati::latest()->take(5)->get(),
-        ];
+public function dashboard()
+{
+    $today = now()->format('Y-m-d');
 
-        return view('kesiswaan.dashboard', $data);
+    // 1. Grafik Harian (Susun jam 04:00 hingga 21:00 supaya teratur)
+    $chartData = ['labels' => [], 'values' => []];
+    for ($h = 4; $h <= 21; $h++) {
+        $labelJam = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
+        $chartData['labels'][] = $labelJam;
+        $chartData['values'][] = \App\Models\Presensi::whereDate('waktu_scan', $today)
+                                ->whereRaw('HOUR(waktu_scan) = ?', [$h])
+                                ->count();
     }
 
+    // 2. Grafik Mingguan (Selesaikan masalah 'Invalid Date')
+    $weeklyData = ['labels' => [], 'values' => []];
+    for ($i = 6; $i >= 0; $i--) {
+        $date = now()->subDays($i);
+        // Hantar label dalam bentuk String terus (contoh: "08 Jan")
+        $weeklyData['labels'][] = $date->translatedFormat('d M'); 
+        $weeklyData['values'][] = \App\Models\Presensi::whereDate('waktu_scan', $date->format('Y-m-d'))
+                                 ->distinct('santriwati_id')->count();
+    }
+
+    $totalSantri = \App\Models\Santriwati::count();
+    $hadirHariIni = \App\Models\Presensi::whereDate('waktu_scan', $today)->distinct('santriwati_id')->count();
+    $terlambatHariIni = \App\Models\Presensi::whereDate('waktu_scan', $today)->where('status', 'TELAT')->count();
+    $tidakHadir = $totalSantri - $hadirHariIni;
+
+    return view('kesiswaan.dashboard', compact(
+        'chartData', 'weeklyData', 'hadirHariIni', 
+        'terlambatHariIni', 'tidakHadir', 'totalSantri'
+    ));
+}
     /**
      * INDEX: Daftar semua santriwati
      */

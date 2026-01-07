@@ -1,100 +1,119 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto pb-12">
-    <div class="flex items-center space-x-4 mb-8">
-        <div class="w-2 h-10 bg-[#1B763B] rounded-full"></div>
-        <h1 class="font-berkshire text-4xl text-[#473829]">Terminal Scan RFID</h1>
-    </div>
-
-    <div class="bg-white rounded-[50px] shadow-2xl border-t-[15px] border-[#1B763B] p-12 text-center relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#1B763B]/5 rounded-full"></div>
-        
-        <div class="relative z-10">
-            <div class="mb-8 inline-flex items-center justify-center w-24 h-24 bg-[#1B763B]/10 rounded-full text-[#1B763B] animate-pulse">
-                <i class="ph-bold ph-broadcast text-5xl"></i>
+<div class="max-w-5xl mx-auto">
+    {{-- Notifikasi --}}
+    @if(session('success') || session('error') || session('info') || session('warning'))
+        <div class="mb-6 animate-bounce">
+            <div class="px-6 py-4 rounded-2xl shadow-lg border-l-8 
+                {{ session('success') ? 'bg-green-500 border-green-700' : '' }}
+                {{ session('error') ? 'bg-red-500 border-red-700' : '' }}
+                {{ session('warning') ? 'bg-yellow-500 border-yellow-700' : '' }}
+                {{ session('info') ? 'bg-blue-500 border-blue-700' : '' }} text-white font-bold">
+                {{ session('success') ?? session('error') ?? session('warning') ?? session('info') }}
             </div>
+        </div>
+    @endif
 
-            <h2 class="text-2xl font-black text-[#473829] mb-2 uppercase tracking-tighter">Siap Memindai Kartu</h2>
-            <p class="text-gray-400 text-sm mb-10 font-medium">Tempelkan kartu RFID santriwati pada alat scanner</p>
-
-            @if(session('success'))
-                <div class="mb-8 p-4 bg-green-50 border-2 border-green-100 rounded-3xl flex items-center justify-center space-x-3 shadow-sm">
-                    <i class="ph-fill ph-check-circle text-green-500 text-2xl"></i>
-                    <span class="font-black text-green-700 uppercase text-xs tracking-widest">{{ session('success') }}</span>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="mb-8 p-4 bg-red-50 border-2 border-red-100 rounded-3xl flex items-center justify-center space-x-3 shadow-sm">
-                    <i class="ph-fill ph-warning-circle text-red-500 text-2xl"></i>
-                    <span class="font-black text-red-700 uppercase text-xs tracking-widest">{{ session('error') }}</span>
-                </div>
-            @endif
-
-            <form action="{{ route('presensi.check') }}" method="POST" id="rfid-form">
-                @csrf
-                <input type="hidden" name="kegiatan_id" value="{{ $kegiatanAktif->id ?? '' }}">
+    <div class="bg-white rounded-[50px] shadow-2xl border-t-[15px] border-[#1B763B] overflow-hidden">
+        <div class="p-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 
-                <div class="relative max-w-md mx-auto">
-                    <input type="text" 
-                           name="rfid" 
-                           id="rfid_input" 
-                           class="w-full bg-gray-50 border-4 border-dashed border-gray-200 rounded-[30px] px-6 py-12 text-center text-4xl font-black text-[#473829] tracking-[0.5em] focus:border-[#1B763B] focus:bg-white outline-none transition-all placeholder:text-gray-200"
-                           placeholder="••••••••"
-                           autofocus 
-                           autocomplete="off">
-                </div>
-            </form>
+                {{-- SISI KIRI: AREA SCAN --}}
+                <div class="text-center space-y-6 border-r-2 border-gray-50 pr-6">
+                    <div class="relative inline-block">
+                        <div class="absolute -inset-4 bg-[#8BC53F]/20 rounded-full animate-ping"></div>
+                        <div class="relative w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center border-4 border-[#1B763B]">
+                            <i class="ph ph-broadcast text-6xl text-[#1B763B]"></i>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h1 class="font-berkshire text-4xl text-[#473829]">Terminal Scan RFID</h1>
+                        <p class="text-gray-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Silakan Tapping Kartu Anda</p>
+                    </div>
 
-            <div class="mt-12 pt-8 border-t border-gray-100 flex items-center justify-center space-x-8">
-                <div class="text-left">
-                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Kegiatan Saat Ini:</p>
-                    <p class="font-bold text-[#1B763B] uppercase text-sm">{{ $kegiatanAktif->nama_kegiatan ?? 'Tidak Ada Kegiatan Aktif' }}</p>
+                    {{-- Form Input RFID (Otomatis Fokus) --}}
+                    <form action="{{ route('presensi.check') }}" method="POST">
+                        @csrf
+                        <input type="text" name="rfid" id="rfid_input" autofocus autocomplete="off"
+                            class="w-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl px-6 py-4 text-center font-black text-2xl tracking-[0.5em] focus:border-[#1B763B] focus:bg-white outline-none transition-all"
+                            placeholder="•••• •••• ••••">
+                        {{-- Masukkan kegiatan_id secara hidden jika kegiatan aktif ditemukan --}}
+                        @if($kegiatanAktif)
+                            <input type="hidden" name="kegiatan_id" value="{{ $kegiatanAktif->id }}">
+                        @endif
+                    </form>
+
+                    {{-- Info Kegiatan Aktif --}}
+                    <div class="bg-[#473829] rounded-3xl p-6 text-white shadow-xl transform hover:scale-105 transition">
+                        <p class="text-[10px] font-black opacity-50 uppercase tracking-widest">Kegiatan Saat Ini:</p>
+                        @if($kegiatanAktif)
+                            <h2 class="text-2xl font-black text-[#8BC53F] uppercase">{{ $kegiatanAktif->nama_kegiatan }}</h2>
+                            <p class="text-xs font-bold mt-1">Pukul: {{ \Carbon\Carbon::parse($kegiatanAktif->jam)->format('H:i') }} WIB</p>
+                        @else
+                            <h2 class="text-xl font-black text-red-400">TIDAK ADA JADWAL AKTIF</h2>
+                            <p class="text-[9px] opacity-70">Sistem tidak menemukan jadwal jam ini</p>
+                        @endif
+                    </div>
                 </div>
-                <div class="w-px h-8 bg-gray-100"></div>
-                <div class="text-left">
-                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Waktu:</p>
-                    <p class="font-bold text-[#473829] uppercase text-sm">{{ now()->format('H:i') }} WIB</p>
+
+                {{-- SISI KANAN: DATA SANTRI (PLACEHOLDER) --}}
+                <div class="space-y-8 bg-gray-50/50 p-8 rounded-[40px] border-2 border-white shadow-inner">
+                    <div class="flex flex-col items-center text-center">
+                        {{-- Foto Santri --}}
+                        <div class="w-40 h-40 bg-white rounded-[40px] shadow-xl flex items-center justify-center p-4 mb-6 border-4 border-white overflow-hidden">
+                            @if(session('last_santri'))
+                                <i class="ph ph-user-circle text-8xl text-[#1B763B]"></i>
+                            @else
+                                <i class="ph ph-user-focus text-8xl text-gray-200"></i>
+                            @endif
+                        </div>
+
+                        {{-- Nama & Angkatan --}}
+                        <div class="space-y-2">
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Detail Santriwati</p>
+                            <h3 class="text-3xl font-black text-[#473829] leading-tight">
+                                {{ session('last_santri')->nama_lengkap ?? 'MENUNGGU SCAN...' }}
+                            </h3>
+                            <div class="flex items-center justify-center space-x-3 mt-2">
+                                <span class="px-4 py-1 bg-white rounded-full text-[10px] font-black text-[#1B763B] shadow-sm uppercase tracking-tighter">
+                                    Angkatan: {{ session('last_santri')->angkatan ?? '-' }}
+                                </span>
+                                <span class="px-4 py-1 bg-[#1B763B] text-white rounded-full text-[10px] font-black shadow-sm uppercase tracking-tighter">
+                                    Status: {{ session('status_absen') ?? 'OFFLINE' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Quote / Pesan Motivasi --}}
+                    <div class="bg-white/80 p-6 rounded-3xl text-center border border-white">
+                        <p class="text-xs italic text-gray-400">"Kedisiplinan adalah jembatan antara cita-cita dan pencapaian."</p>
+                    </div>
                 </div>
+
             </div>
-        </div>
-    </div>
-
-    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white/50 border border-dashed border-gray-200 p-6 rounded-[30px] flex items-center space-x-4">
-            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#473829] font-bold">1</div>
-            <p class="text-xs font-bold text-gray-500 uppercase leading-relaxed">Kursor otomatis fokus pada area scan</p>
-        </div>
-        <div class="bg-white/50 border border-dashed border-gray-200 p-6 rounded-[30px] flex items-center space-x-4">
-            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#473829] font-bold">2</div>
-            <p class="text-xs font-bold text-gray-500 uppercase leading-relaxed">Tap kartu dan data terkirim otomatis</p>
-        </div>
-        <div class="bg-white/50 border border-dashed border-gray-200 p-6 rounded-[30px] flex items-center space-x-4">
-            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#473829] font-bold">3</div>
-            <p class="text-xs font-bold text-gray-500 uppercase leading-relaxed">Tanpa perlu input keterangan tambahan</p>
         </div>
     </div>
 </div>
 
+{{-- Script agar input selalu fokus --}}
+@push('scripts')
 <script>
     const rfidInput = document.getElementById('rfid_input');
-
-    // 1. Selalu Fokus ke Input (meski user klik di luar kotak)
+    
+    // Autofocus kembali jika klik di mana saja
     document.addEventListener('click', () => {
         rfidInput.focus();
     });
 
-    // 2. Auto-submit saat scanner mendeteksi kartu (biasanya diakhiri dengan 'Enter' oleh scanner)
-    // Script ini juga menangani jika scanner memasukkan karakter secara cepat
-    let timer;
-    rfidInput.addEventListener('input', () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            if (rfidInput.value.length >= 5) { // Minimal digit RFID
-                document.getElementById('rfid-form').submit();
-            }
-        }, 300); // Tunggu 300ms setelah input berhenti untuk submit
+    // Mencegah form disubmit jika input kosong
+    rfidInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && this.value === '') {
+            e.preventDefault();
+        }
     });
 </script>
+@endpush
 @endsection

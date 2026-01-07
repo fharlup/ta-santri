@@ -58,63 +58,47 @@
 
 <script>
     const brandColor = '#473829';
+    const accentColor = '#1B763B';
 
-    // ===== CHART HARI INI =====
+    // ===== FIX GRAFIK HARIAN (Urutan Jam) =====
     const dataDay = @json($chartData);
     new Chart(document.getElementById('chartHariIni'), {
         type: 'bar',
         data: {
-            labels: Object.keys(dataDay).map(h => h + ':00'),
+            labels: dataDay.labels, // Mengambil label jam yang sudah urut dari PHP
             datasets: [{
-                data: Object.values(dataDay),
-                backgroundColor: brandColor,
+                label: 'Jumlah Tap RFID',
+                data: dataDay.values, // Mengambil nilai count
+                backgroundColor: accentColor,
                 borderRadius: 8
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0 }
-                }
-            }
+            plugins: { legend: { display: false } }
         }
     });
 
-    // ===== CHART MINGGUAN =====
+    // ===== FIX GRAFIK MINGGUAN (Invalid Date) =====
     const dataWeek = @json($weeklyData);
     new Chart(document.getElementById('chartMingguIni'), {
-        type: 'bar',
+        type: 'line',
         data: {
-            labels: Object.keys(dataWeek).map(d =>
-                new Date(d).toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: '2-digit'
-                })
-            ),
+            labels: dataWeek.labels, // Menampilkan "07 Jan", "08 Jan", dst
             datasets: [{
-                data: Object.values(dataWeek),
-                backgroundColor: brandColor,
-                borderRadius: 8
+                label: 'Total Kehadiran',
+                data: dataWeek.values,
+                borderColor: brandColor,
+                backgroundColor: 'rgba(71, 56, 41, 0.1)',
+                fill: true,
+                tension: 0.4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0 }
-                }
-            }
+            plugins: { legend: { display: false } }
         }
     });
 </script>
