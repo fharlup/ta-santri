@@ -9,38 +9,46 @@ class AuthController extends Controller
 {
     /**
      * FR-01: Proses Login Multi-Role
+     * Menangani login untuk Kesiswaan, Komdis, Wali Kelas, dan Santri.
      */
     public function login(Request $request)
     {
-        // Validasi input
+        // 1. Validasi Input
         $credentials = $request->validate([
             'username' => 'required',
             'password' => 'required',
         ]);
 
-        // Coba autentikasi
+        // 2. Coba Autentikasi
+        // Auth::attempt akan otomatis mengecek password yang di-hash di database
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             
-            // Redirect berdasarkan Role
-            $role = Auth::user()->role;
-            return redirect()->intended(strtolower($role) . '/dashboard');
+            /**
+             * REDIRECT TUNGGAL:
+             * Semua role diarahkan ke rute 'kesiswaan.dashboard'.
+             * Pastikan rute ini sudah terdaftar di web.php Anda.
+             */
+            return redirect()->intended(route('kesiswaan.dashboard'));
         }
 
-        // JIKA GAGAL: Wajib mengirimkan pesan error ke session (untuk TC-02)
+        // 3. JIKA GAGAL: Kembalikan pesan error ke halaman login
         return back()->withErrors([
             'username' => 'Username atau password salah.',
         ])->onlyInput('username');
     }
 
     /**
-     * Logout
+     * FR-02: Logout Sistem
      */
     public function logout(Request $request)
     {
         Auth::logout();
+
+        // Bersihkan session agar aman
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/');
     }
 }

@@ -6,171 +6,171 @@ use Illuminate\Http\Request;
 use App\Models\Santriwati;
 use App\Models\Angkatan;
 use App\Models\Kelas;
-use App\Models\User;
-use App\Models\Kegiatan;
+use App\Models\Presensi;
+use App\Models\Penilaian;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class DataMasterController extends Controller
 {
     /**
-     * DASHBOARD: Menampilkan statistik utama
+     * DASHBOARD: Menampilkan statistik harian & grafik
      */
-public function dashboard()
-{
-    $user = auth()->user();
-    $today = now()->format('Y-m-d');
+    public function dashboard()
+    {
+        $user = Auth::user();
+        $today = now()->format('Y-m-d');
 
-    // 1. Grafik Harian (Susun jam 04:00 hingga 21:00 supaya teratur)
-    $chartData = ['labels' => [], 'values' => []];
-    for ($h = 4; $h <= 21; $h++) {
-        $labelJam = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
-        $chartData['labels'][] = $labelJam;
-        $chartData['values'][] = \App\Models\Presensi::whereDate('waktu_scan', $today)
-                                ->whereRaw('HOUR(waktu_scan) = ?', [$h])
-                                ->count();
+        // --- 1. LOGIKA UNTUK ROLE SANTRI ---
+        if ($user->role == 'Santri') {
+            if (!$user->santriwati_id) {
+                return "Akun Anda belum terhubung dengan data Santriwati. Silakan hubungi bagian Kesiswaan.";
+            }
+
+            $data = [
+                'total_hadir' => Presensi::where('santriwati_id', $user->santriwati_id)
+                                ->where('status', 'Hadir')->count(),
+                'nilai_terakhir' => Penilaian::where('santriwati_id', $user->santriwati_id)
+                                ->latest()->first(),
+                'presensi' => Presensi::where('santriwati_id', $user->santriwati_id)
+                                ->with('kegiatan')->latest()->take(5)->get(),
+            ];
+
+            return view('kesiswaan.dashboard', compact('data'));
+        }
+
+        // --- 2. LOGIKA UNTUK ROLE ADMIN (KESISWAAN/KOMDIS/WALI KELAS) ---
+        $chartData = ['labels' => [], 'values' => []];
+        for ($h = 4; $h <= 21; $h++) {
+            $labelJam = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
+            $chartData['labels'][] = $labelJam;
+            $chartData['values'][] = Presensi::whereDate('waktu_scan', $today)
+                                    ->whereRaw('HOUR(waktu_scan) = ?', [$h])
+                                    ->count();
+        }
+
+        $weeklyData = ['labels' => [], 'values' => []];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $weeklyData['labels'][] = $date->translatedFormat('d M'); 
+            $weeklyData['values'][] = Presensi::whereDate('waktu_scan', $date->format('Y-m-d'))
+                                     ->distinct('santriwati_id')->count();
+        }
+
+        $totalSantri = Santriwati::count();
+        $hadirHariIni = Presensi::whereDate('waktu_scan', $today)->distinct('santriwati_id')->count();
+        $terlambatHariIni = Presensi::whereDate('waktu_scan', $today)->where('status', 'TELAT')->count();
+        $tidakHadir = max(0, $totalSantri - $hadirHariIni);
+
+        return view('kesiswaan.dashboard', compact(
+            'chartData', 'weeklyData', 'hadirHariIni', 
+            'terlambatHariIni', 'tidakHadir', 'totalSantri'
+        ));
     }
 
-    // 2. Grafik Mingguan (Selesaikan masalah 'Invalid Date')
-    $weeklyData = ['labels' => [], 'values' => []];
-    for ($i = 6; $i >= 0; $i--) {
-        $date = now()->subDays($i);
-        // Hantar label dalam bentuk String terus (contoh: "08 Jan")
-        $weeklyData['labels'][] = $date->translatedFormat('d M'); 
-        $weeklyData['values'][] = \App\Models\Presensi::whereDate('waktu_scan', $date->format('Y-m-d'))
-                                 ->distinct('santriwati_id')->count();
-    }
-
-    $totalSantri = \App\Models\Santriwati::count();
-    $hadirHariIni = \App\Models\Presensi::whereDate('waktu_scan', $today)->distinct('santriwati_id')->count();
-    $terlambatHariIni = \App\Models\Presensi::whereDate('waktu_scan', $today)->where('status', 'TELAT')->count();
-    $tidakHadir = $totalSantri - $hadirHariIni;
-
-    return view('kesiswaan.dashboard', compact(
-        'chartData', 'weeklyData', 'hadirHariIni', 
-        'terlambatHariIni', 'tidakHadir', 'totalSantri'
-    ));
-}
     /**
-     * INDEX: Daftar semua santriwati
+     * INDEX: Daftar santriwati dengan fitur Search & Filter
      */
+    public function index(Request $request)
+    {
+        $allAngkatan = Angkatan::all();
+        $query = Santriwati::query();
 
- public function index(Request $request)
-{
-    $allAngkatan = \App\Models\Santriwati::distinct()->pluck('angkatan');
-    $query = \App\Models\Santriwati::query();
+        if ($request->filled('search')) {
+            $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
+                  ->orWhere('nim', 'like', '%' . $request->search . '%');
+        }
 
-    // Logika Search Nama
-    if ($request->filled('search')) {
-        $query->where('nama_lengkap', 'like', '%' . $request->search . '%');
+        if ($request->filled('angkatan')) {
+            $query->where('angkatan', $request->angkatan);
+        }
+
+        $santris = $query->latest()->paginate(20);
+
+        return view('kesiswaan.santri.index', compact('santris', 'allAngkatan'));
     }
 
-    // Filter Angkatan
-    if ($request->filled('angkatan')) {
-        $query->where('angkatan', $request->angkatan);
-    }
-
-    $santris = $query->latest()->paginate(20);
-
-    return view('kesiswaan.santri.index', compact('santris', 'allAngkatan'));
-}
-    /**
-     * CREATE: Form tambah santri (Sinkron dengan Master Angkatan & Kelas)
-     */
     public function create()
     {
         $angkatans = Angkatan::all();
         $kelas = Kelas::all();
-        
         return view('kesiswaan.santri.create', compact('angkatans', 'kelas'));
     }
 
     /**
-     * STORE: Simpan data santri baru
+     * STORE: Simpan santri baru ke database (Sudah ada NIM)
      */
-   public function store(Request $request)
-{
-    $request->validate([
-        'nama_lengkap' => 'required|string|max:255',
-        'username'     => 'required|string|unique:santriwatis,username',
-        'password'     => 'required|min:6',
-        'rfid_id'      => 'required|string|unique:santriwatis,rfid_id',
-        'angkatan'     => 'required',
-        'kelas'        => 'required',
-    ]);
+    public function store(Request $request)
+    {
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            'nim'          => 'required|string|unique:santriwatis,nim', // Validasi NIM
+            'username'     => 'required|string|unique:santriwatis,username',
+            'password'     => 'required|min:6',
+            'rfid_id'      => 'required|string|unique:santriwatis,rfid_id',
+            'angkatan'     => 'required',
+            'kelas'        => 'required',
+        ]);
 
-    Santriwati::create([
-        'nama_lengkap' => strtoupper($request->nama_lengkap),
-        'nim'          => $request->nim,
-        'username'     => $request->username,
-        'password'     => $request->password,
-        'rfid_id'      => $request->rfid_id,
-        'angkatan'     => $request->angkatan,
-        'kelas'        => $request->kelas,
-    ]);
+        Santriwati::create([
+            'nama_lengkap' => strtoupper($request->nama_lengkap),
+            'nim'          => $request->nim, // Input NIM
+            'username'     => $request->username,
+            'password'     => Hash::make($request->password), // Enkripsi password
+            'rfid_id'      => $request->rfid_id,
+            'angkatan'     => $request->angkatan,
+            'kelas'        => $request->kelas,
+        ]);
 
-    return redirect()->route('santri.index')->with('success', 'Santriwati berhasil ditambahkan!');
-}
-    /**
-     * EDIT: Form edit santri (Sinkron dengan Master Angkatan & Kelas)
-     */
+        return redirect()->route('santri.index')->with('success', 'Santriwati berhasil ditambahkan!');
+    }
+
     public function edit($id)
     {
         $santri = Santriwati::findOrFail($id);
         $angkatans = Angkatan::all();
         $kelas = Kelas::all();
-
         return view('kesiswaan.santri.edit', compact('santri', 'angkatans', 'kelas'));
     }
 
     /**
-     * UPDATE: Perbarui data santri
+     * UPDATE: Perbarui data santri (Sudah ada NIM)
      */
-   public function update(Request $request, $id)
-{
-    $santri = Santriwati::findOrFail($id);
+    public function update(Request $request, $id)
+    {
+        $santri = Santriwati::findOrFail($id);
 
-    $request->validate([
-        'nama_lengkap' => 'required|string|max:255',
-        
-        'username'     => 'required|string|unique:santriwatis,username,' . $id,
-        'rfid_id'      => 'required|string|unique:santriwatis,rfid_id,' . $id,
-        'angkatan'     => 'required',
-        'kelas'        => 'required',
-    ]);
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            'nim'          => 'required|string|unique:santriwatis,nim,' . $id, // Validasi NIM unik
+            'username'     => 'required|string|unique:santriwatis,username,' . $id,
+            'rfid_id'      => 'required|string|unique:santriwatis,rfid_id,' . $id,
+            'angkatan'     => 'required',
+            'kelas'        => 'required',
+        ]);
 
-    $data = [
-        'nama_lengkap' => strtoupper($request->nama_lengkap),
-        'username'     => $request->username,
-        'rfid_id'      => $request->rfid_id,
-        'angkatan'     => $request->angkatan,
-        'kelas'        => $request->kelas,
-    ];
+        $data = [
+            'nama_lengkap' => strtoupper($request->nama_lengkap),
+            'nim'          => $request->nim, // Update NIM
+            'username'     => $request->username,
+            'rfid_id'      => $request->rfid_id,
+            'angkatan'     => $request->angkatan,
+            'kelas'        => $request->kelas,
+        ];
 
-    // Update password hanya jika diisi
-    if ($request->filled('password')) {
-        $data['password'] = $request->password;
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $santri->update($data);
+
+        return redirect()->route('santri.index')->with('success', 'Data santriwati diperbarui!');
     }
 
-    $santri->update($data);
-
-    return redirect()->route('santri.index')->with('success', 'Data santriwati diperbarui!');
-}
-
-    /**
-     * DESTROY: Hapus data santri
-     */
     public function destroy($id)
-{
-    $santri = Santriwati::findOrFail($id);
-
-    // 1. Hapus semua data penilaian milik santri ini terlebih dahulu
-    $santri->penilaians()->delete(); 
-
-    // 2. Hapus semua data presensi milik santri ini (jika ada)
-    $santri->presensis()->delete();
-
-    // 3. Baru hapus data santrinya
-    $santri->delete();
-
-    return redirect()->route('santri.index')->with('success', 'Data santriwati dan seluruh riwayatnya telah dihapus!');
-}
+    {
+        $santri = Santriwati::findOrFail($id);
+        $santri->delete();
+        return redirect()->route('santri.index')->with('success', 'Data santriwati berhasil dihapus!');
+    }
 }

@@ -8,7 +8,7 @@
     </div>
 
     <div class="bg-white rounded-[50px] shadow-2xl border-t-[15px] border-[#1B763B] p-12">
-        <form action="{{ route('users.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('user.store') }}" method="POST" class="space-y-6">
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -45,7 +45,7 @@
             </div>
 
             <div class="flex justify-end space-x-4 pt-10">
-                <a href="{{ route('users.index') }}" class="px-8 py-4 text-gray-400 font-bold uppercase text-xs tracking-widest">Batal</a>
+                <a href="{{ route('user.index') }}" class="px-8 py-4 text-gray-400 font-bold uppercase text-xs tracking-widest">Batal</a>
                 <button type="submit" class="bg-[#1B763B] text-white px-12 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#473829] transition">
                     Simpan Staf Baru
                 </button>

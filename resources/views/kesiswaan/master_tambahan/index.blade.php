@@ -1,134 +1,147 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SI-DISIPLIN | Tunas Qur'an</title>
 
-@section('content')
-<div class="max-w-full mx-auto pb-10 px-4 sm:px-6 lg:px-8">
-    {{-- HEADER HALAMAN --}}
-    <div class="flex items-center space-x-5 mb-10">
-        <div class="w-3 h-14 bg-[#1B763B] rounded-full shadow-lg"></div>
-        <div>
-            <h1 class="font-berkshire text-4xl text-[#473829]">Master Angkatan & Kelas</h1>
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pengaturan Data Dasar Sistem</p>
-        </div>
-    </div>
+    <link href="https://fonts.googleapis.com/css2?family=Berkshire+Swash&family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        
-        {{-- SEKSI 1: MANAJEMEN ANGKATAN --}}
-        <div>
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="font-black text-[#473829] uppercase tracking-tighter text-xl">Daftar Angkatan</h2>
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        .font-berkshire { font-family: 'Berkshire Swash', cursive; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #1B763B; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-[#473829]">
+
+    <div class="flex min-h-screen">
+        {{-- SIDEBAR --}}
+        <aside class="w-72 bg-[#473829] text-white flex flex-col fixed h-full z-50">
+            {{-- Logo --}}
+            <div class="p-8">
+                <h1 class="font-berkshire text-2xl text-white">SI-DISIPLIN</h1>
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Tunas Qur'an Boarding</p>
             </div>
 
-            {{-- FORM SEARCH ANGKATAN --}}
-            <div class="mb-5 bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                <form action="{{ route('master.index') }}" method="GET" class="flex gap-3">
-                    <div class="flex-1 relative">
-                        <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" name="search_angkatan" value="{{ request('search_angkatan') }}" 
-                               placeholder="Cari tahun angkatan..." 
-                               class="w-full bg-gray-50 border-none rounded-xl pl-11 pr-4 py-2 text-sm font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B]">
+            {{-- User Info Singkat --}}
+            <div class="px-8 pb-8">
+                <div class="flex items-center space-x-3 bg-white/5 p-4 rounded-2xl">
+                    <div class="w-10 h-10 bg-[#1B763B] rounded-xl flex items-center justify-center font-bold text-white shadow-lg">
+                        {{ substr(auth()->user()->nama_lengkap, 0, 1) }}
                     </div>
-                    <button type="submit" class="bg-[#1B763B] text-white px-5 py-2 rounded-xl font-black text-[10px] uppercase shadow-md">Cari</button>
-                    @if(request('search_angkatan'))
-                        <a href="{{ route('master.index') }}" class="text-[10px] font-bold text-red-400 uppercase flex items-center underline">Reset</a>
-                    @endif
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-black truncate uppercase">{{ auth()->user()->nama_lengkap }}</p>
+                        <p class="text-[9px] font-bold text-white/40 uppercase tracking-wider">{{ auth()->user()->role }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Navigation --}}
+            <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+                <p class="px-4 text-[9px] font-black text-white/20 uppercase tracking-widest mb-2">Main Menu</p>
+                
+                {{-- Dashboard: Bisa diakses SEMUA role --}}
+                <a href="{{ route('kesiswaan.dashboard') }}" 
+                   class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('dashboard') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                    <i class="ph ph-house mr-3 text-xl"></i> Dashboard
+                </a>
+
+                {{-- Menu untuk Staff (Bukan Santri) --}}
+                @if(auth()->user()->role !== 'Santri')
+                    <a href="{{ route('presensi.scan') }}" 
+                       class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*scan*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                        <i class="ph ph-qr-code mr-3 text-xl"></i> Scan Presensi
+                    </a>
+
+                    <a href="{{ route('penilaian.create') }}" 
+                       class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*penilaian/create*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                        <i class="ph ph-note-pencil mr-3 text-xl"></i> Input Penilaian
+                    </a>
+                @endif
+
+                {{-- Menu Khusus KESISWAAN (ADMIN) --}}
+                @if(auth()->user()->role == 'Kesiswaan')
+                    <div class="pt-6 pb-2 px-4 text-[9px] font-black text-white/20 uppercase tracking-widest">Administrator</div>
+                    
+                    <a href="{{ route('santri.index') }}" 
+                       class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*santri*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                        <i class="ph ph-student mr-3 text-xl"></i> Manajemen Santri
+                    </a>
+
+                    <a href="{{ route('user.index') }}" 
+                       class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*user*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                        <i class="ph ph-user-gear mr-3 text-xl"></i> Manajemen Pengguna
+                    </a>
+
+                    <a href="{{ route('master.index') }}" 
+                       class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*master-data*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                        <i class="ph ph-list-numbers mr-3 text-xl"></i> Master Angkatan & Kelas
+                    </a>
+
+                    <a href="{{ route('presensi.export') }}" 
+                       class="flex items-center px-4 py-3 rounded-2xl transition-all text-[#8BC53F] hover:bg-[#8BC53F] hover:text-white mt-4 border border-[#8BC53F]/20">
+                        <i class="ph ph-file-xls mr-3 text-xl"></i> <span class="text-xs font-black uppercase">Export Laporan</span>
+                    </a>
+                @endif
+            </nav>
+
+            {{-- Logout --}}
+            <div class="p-8 border-t border-white/5">
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="flex items-center w-full px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-2xl transition-all font-bold text-xs uppercase tracking-widest">
+                        <i class="ph ph-sign-out mr-3 text-xl"></i> Keluar Sistem
+                    </button>
                 </form>
             </div>
+        </aside>
 
-            {{-- FORM TAMBAH ANGKATAN --}}
-            <form action="{{ route('master.angkatan.store') }}" method="POST" class="mb-5 flex gap-3">
-                @csrf
-                <input type="text" name="nama_angkatan" placeholder="Input angkatan baru (contoh: 2024)" required
-                       class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[#1B763B]">
-                <button type="submit" class="bg-[#473829] text-white px-5 py-2 rounded-xl font-black text-[10px] uppercase shadow-md">+ Simpan</button>
-            </form>
+        {{-- MAIN CONTENT AREA --}}
+        <main class="flex-1 ml-72">
+            {{-- Top Header --}}
+            <header class="bg-white/80 backdrop-blur-md h-20 flex items-center justify-between px-10 sticky top-0 z-40 border-b border-gray-100">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Sistem Informasi Kedisiplinan v2.0</span>
+                </div>
+                <div class="text-right">
+                    <p id="clock" class="text-sm font-black text-[#473829]"></p>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{{ date('d F Y') }}</p>
+                </div>
+            </header>
 
-            {{-- TABEL ANGKATAN --}}
-            <div class="bg-white rounded-[40px] shadow-xl border-t-[10px] border-[#473829] overflow-hidden">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-gray-50 border-b">
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase">Tahun Angkatan</th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        @forelse($angkatans as $a)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 font-black text-[#473829] text-sm uppercase">{{ $a->nama_angkatan }}</td>
-                            <td class="px-6 py-4 text-center">
-                                <form action="{{ route('master.angkatan.destroy', $a->id) }}" method="POST" onsubmit="return confirm('Hapus angkatan ini?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="text-red-400 hover:text-red-600"><i class="ph ph-trash text-xl"></i></button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="2" class="py-10 text-center text-gray-300 font-bold uppercase text-[10px]">Data tidak ditemukan</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {{-- SEKSI 2: MANAJEMEN KELAS --}}
-        <div>
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="font-black text-[#473829] uppercase tracking-tighter text-xl">Daftar Kelas</h2>
-            </div>
-
-            {{-- FORM SEARCH KELAS --}}
-            <div class="mb-5 bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                <form action="{{ route('master.index') }}" method="GET" class="flex gap-3">
-                    <div class="flex-1 relative">
-                        <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" name="search_kelas" value="{{ request('search_kelas') }}" 
-                               placeholder="Cari nama kelas..." 
-                               class="w-full bg-gray-50 border-none rounded-xl pl-11 pr-4 py-2 text-sm font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B]">
+            {{-- Content Wrapper --}}
+            <div class="p-10">
+                {{-- Notifikasi Sukses --}}
+                @if(session('success'))
+                    <div class="mb-8 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                        <span class="font-bold text-sm uppercase tracking-tighter">{{ session('success') }}</span>
+                        <i class="ph ph-check-circle text-2xl"></i>
                     </div>
-                    <button type="submit" class="bg-[#1B763B] text-white px-5 py-2 rounded-xl font-black text-[10px] uppercase shadow-md">Cari</button>
-                    @if(request('search_kelas'))
-                        <a href="{{ route('master.index') }}" class="text-[10px] font-bold text-red-400 uppercase flex items-center underline">Reset</a>
-                    @endif
-                </form>
+                @endif
+
+                @yield('content')
             </div>
-
-            {{-- FORM TAMBAH KELAS --}}
-            <form action="{{ route('master.kelas.store') }}" method="POST" class="mb-5 flex gap-3">
-                @csrf
-                <input type="text" name="nama_kelas" placeholder="Input kelas baru (contoh: 7A)" required
-                       class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[#1B763B]">
-                <button type="submit" class="bg-[#473829] text-white px-5 py-2 rounded-xl font-black text-[10px] uppercase shadow-md">+ Simpan</button>
-            </form>
-
-            {{-- TABEL KELAS --}}
-            <div class="bg-white rounded-[40px] shadow-xl border-t-[10px] border-[#1B763B] overflow-hidden">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-gray-50 border-b">
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase">Nama Kelas</th>
-                            <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        @forelse($kelass as $k)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 font-black text-[#473829] text-sm uppercase">{{ $k->nama_kelas }}</td>
-                            <td class="px-6 py-4 text-center">
-                                <form action="{{ route('master.kelas.destroy', $k->id) }}" method="POST" onsubmit="return confirm('Hapus kelas ini?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="text-red-400 hover:text-red-600"><i class="ph ph-trash text-xl"></i></button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="2" class="py-10 text-center text-gray-300 font-bold uppercase text-[10px]">Data tidak ditemukan</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+        </main>
     </div>
-</div>
-@endsection
+
+    {{-- Jam Realtime Script --}}
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('clock').textContent = timeString + ' WIB';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+
+</body>
+</html>

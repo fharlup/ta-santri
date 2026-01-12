@@ -3,7 +3,7 @@
 @section('content')
 {{-- SEARCH & FILTER SECTION --}}
 <div class="mb-8 bg-white p-6 rounded-[30px] shadow-sm border border-gray-100">
-    <form action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-end gap-6">
+    <form action="{{ route('user.index') }}" method="GET" class="flex flex-wrap items-end gap-6">
         {{-- SEARCH NAMA PENGGUNA --}}
         <div class="flex-[2] min-w-[300px]">
             <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cari Nama Pengguna</label>
