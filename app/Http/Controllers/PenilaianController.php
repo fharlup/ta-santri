@@ -19,41 +19,40 @@ class PenilaianController extends Controller
         return view('kesiswaan.penilaian.create', compact('santris'));
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'santriwati_id' => 'required',
-            'tanggal' => 'required|date',
-            'angkatan' => 'required',
-            'disiplin' => 'required',
-            'k3' => 'required',
-            'tanggung_jawab' => 'required',
-            'inisiatif_kreativitas' => 'required',
-            'adab' => 'required',
-            'berterate' => 'required',
-            'kesabaran' => 'required',
-            'produktif' => 'required',
-            'mandiri' => 'required',
-            'optimis' => 'required',
-            'kejujuran' => 'required',
-            'deskripsi' => 'nullable'
-        ]);
-
-        Penilaian::create($validated);
-
-        return redirect()->route('penilaian.riwayat')->with('success', 'Data berhasil disubmit'); //
-    }
-
-    public function riwayat()
-    {
-        $penilaians = Penilaian::with('santriwati')->latest()->get(); //
-        return view('kesiswaan.penilaian.riwayat', compact('penilaians'));
-    }
-    public function edit($id)
+ 
+    
+public function store(Request $request)
 {
-    $penilaian = Penilaian::with('santriwati')->findOrFail($id);
-    $santris = Santriwati::all();
-    return view('kesiswaan.penilaian.edit', compact('penilaian', 'santris'));
+    // 1. Validasi dasar
+    $request->validate([
+        'santriwati_id' => 'required|exists:santriwatis,id',
+        'tanggal' => 'required',
+    ]);
+
+    // 2. Ambil data santri secara otomatis untuk mendapatkan 'angkatan'
+    $santri = \App\Models\Santriwati::findOrFail($request->santriwati_id);
+
+    // 3. Simpan data ke database
+    \App\Models\Penilaian::create([
+        'santriwati_id'         => $santri->id,
+        'user_id'               => auth()->id(),
+        'tanggal'               => $request->tanggal,
+        'angkatan'              => $santri->angkatan, // OTOMATIS mengambil dari data santri
+        'disiplin'              => $request->disiplin ?? 'B',
+        'k3'                    => $request->k3 ?? 'B',
+        'tanggung_jawab'        => $request->tanggung_jawab ?? 'B',
+        'inisiatif_kreatifitas' => $request->inisiatif_kreatifitas ?? 'B',
+        'adab'                  => $request->adab ?? 'B',
+        'berterate'             => $request->berterate ?? 'B',
+        'integritas_kesabaran'  => $request->integritas_kesabaran ?? 'B',
+        'integritas_produktif'  => $request->integritas_produktif ?? 'B',
+        'integritas_mandiri'    => $request->integritas_mandiri ?? 'B',
+        'integritas_optimis'    => $request->integritas_optimis ?? 'B',
+        'integritas_kejujuran'  => $request->integritas_kejujuran ?? 'B',
+        'deskripsi'             => $request->deskripsi,
+    ]);
+
+    return redirect()->route('penilaian.rekap')->with('success', 'Penilaian berhasil disimpan!');
 }
 
 public function update(Request $request, $id)

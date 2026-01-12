@@ -74,18 +74,20 @@
                     @forelse($penilaians as $p)
                     <tr class="hover:bg-gray-50 transition-colors group">
                         <td class="px-8 py-6 sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-sm">
-                            <p class="font-black text-[#473829] uppercase text-sm leading-tight">{{ $p->santriwati->nama_lengkap }}</p>
+                            {{-- Mengambil Nama dari Relasi Santriwati --}}
+                            <p class="font-black text-[#473829] uppercase text-sm leading-tight">{{ $p->santriwati->nama_lengkap ?? 'Tanpa Nama' }}</p>
                             <span class="text-[9px] font-bold text-gray-300 uppercase italic">
-                                Angkatan {{ $p->santriwati->angkatan }} | 
-                                {{ \Carbon\Carbon::parse($p->tanggal)->format('d/m/Y') }}
+                                {{-- Mengambil Angkatan dari Kolom Penilaian (Real-time data) --}}
+                                Angkatan {{ $p->angkatan }} | {{ \Carbon\Carbon::parse($p->tanggal)->format('d/m/Y') }}
                             </span>
                         </td>
                         
-                        {{-- Looping Kategori Penilaian --}}
+                        {{-- Looping Kategori Penilaian Sesuai Database --}}
                         @foreach(['adab', 'disiplin', 'tanggung_jawab', 'integritas_kesabaran', 'integritas_kejujuran'] as $field)
                         <td class="px-4 py-6 text-center">
                             @php
                                 $val = $p->$field;
+                                // Logika Warna: A (Hijau), B (Abu-abu), C (Merah)
                                 $color = $val == 'A' ? 'bg-green-100 text-green-600' : ($val == 'C' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500');
                             @endphp
                             <span class="inline-block w-8 h-8 leading-8 rounded-lg font-black text-xs {{ $color }}">
@@ -95,9 +97,19 @@
                         @endforeach
 
                         <td class="px-6 py-6 text-center">
-                            <a href="{{ route('penilaian.edit', $p->id) }}" class="text-[#473829] hover:text-[#1B763B] transition">
-                                <i class="ph ph-note-pencil text-xl"></i>
-                            </a>
+                            <div class="flex justify-center items-center gap-2">
+                                <a href="{{ route('penilaian.edit', $p->id) }}" class="text-[#473829] hover:text-[#1B763B] transition">
+                                    <i class="ph ph-note-pencil text-xl"></i>
+                                </a>
+                                {{-- Tombol Hapus (Opsional) --}}
+                                <form action="{{ route('penilaian.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Hapus data penilaian ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-400 hover:text-red-600 transition">
+                                        <i class="ph ph-trash text-xl"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @empty

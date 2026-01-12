@@ -29,7 +29,15 @@
                     <td class="px-8 py-6 uppercase text-xs font-black text-gray-500">{{ $u->role }}</td>
                     <td class="px-8 py-6 text-center">
                         <a href="{{ route('user.edit', $u->id) }}" class="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition">Edit</a>
+                        <form action="{{ route('user.destroy', $u->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="text-red-400 hover:text-red-600 transition">
+                <i class="ph ph-trash text-xl"></i>
+            </button>
+        </form>
                     </td>
+                    
                 </tr>
                 @endforeach
             </tbody>

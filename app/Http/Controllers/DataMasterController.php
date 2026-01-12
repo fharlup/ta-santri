@@ -144,10 +144,18 @@ public function dashboard()
      * DESTROY: Hapus data santri
      */
     public function destroy($id)
-    {
-        $santri = Santriwati::findOrFail($id);
-        $santri->delete();
+{
+    $santri = Santriwati::findOrFail($id);
 
-        return redirect()->route('santri.index')->with('success', 'Data santriwati telah dihapus!');
-    }
+    // 1. Hapus semua data penilaian milik santri ini terlebih dahulu
+    $santri->penilaians()->delete(); 
+
+    // 2. Hapus semua data presensi milik santri ini (jika ada)
+    $santri->presensis()->delete();
+
+    // 3. Baru hapus data santrinya
+    $santri->delete();
+
+    return redirect()->route('santri.index')->with('success', 'Data santriwati dan seluruh riwayatnya telah dihapus!');
+}
 }

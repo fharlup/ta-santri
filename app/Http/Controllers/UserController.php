@@ -52,4 +52,20 @@ class UserController extends Controller
         $user->update($data);
         return redirect()->route('user.index')->with('success', 'Data pengguna diperbarui');
     }
+    public function destroy($id)
+{
+    // Cegah menghapus diri sendiri yang sedang login
+    if (auth()->id() == $id) {
+        return redirect()->back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
+    }
+
+    $user = User::findOrFail($id);
+
+    // Opsi: Hapus penilaian yang dibuat oleh user ini agar tidak Error Constraint
+    // $user->penilaians()->delete(); 
+
+    $user->delete();
+
+    return redirect()->route('users.index')->with('success', 'Pengguna berhasil dihapus!');
+}
 }

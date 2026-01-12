@@ -8,15 +8,21 @@ class Penilaian extends Model
 {
     protected $fillable = [
       'santriwati_id',
-      'user_id', 
-      
-      'tanggal', 'angkatan',
-    'disiplin', 'k3', 'tanggung_jawab', 
-    'inisiatif_kreatifitas', // Pakai 'f' sesuai migration Anda
-    'adab', 'berterate',
-    'integritas_kesabaran', 'integritas_produktif', 
-    'integritas_mandiri', 'integritas_optimis', 'integritas_kejujuran',
-    'deskripsi'    
+    'user_id', // PASTIKAN INI ADA
+    'tanggal', 
+    'angkatan',
+    'disiplin', 
+    'k3', 
+    'tanggung_jawab', 
+    'inisiatif_kreatifitas',
+    'adab', 
+    'berterate',
+    'integritas_kesabaran', 
+    'integritas_produktif', 
+    'integritas_mandiri', 
+    'integritas_optimis', 
+    'integritas_kejujuran',
+    'deskripsi'
     ];
         protected $casts = [
         'tanggal' => 'date',
