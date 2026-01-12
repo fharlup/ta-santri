@@ -49,6 +49,13 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/edit', [PresensiController::class, 'edit'])->name('edit');
             Route::put('/{id}/update', [PresensiController::class, 'update'])->name('update');
         });
+        Route::prefix('master-tambahan')->name('master_tambahan.')->group(function () {
+            Route::get('/', [MasterTambahanController::class, 'index'])->name('index');
+            Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('angkatan.store');
+            Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('kelas.store');
+            Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('angkatan.destroy');
+            Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('kelas.destroy');
+        });
 
         // --- PENILAIAN ---
         Route::prefix('penilaian')->name('penilaian.')->group(function () {
@@ -83,15 +90,16 @@ Route::middleware('auth')->group(function () {
         // Manajemen Pengguna & Kegiatan (Resource)
         Route::resource('user', UserController::class);
         Route::resource('kegiatan', KegiatanController::class);
-
         // --- MASTER TAMBAHAN (Angkatan & Kelas) ---
         // Sinkron dengan folder resources/views/kesiswaan/master_tambahan
-        Route::prefix('master-tambahan')->name('master_tambahan.')->group(function () {
-            Route::get('/', [MasterTambahanController::class, 'index'])->name('index');
-            Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('angkatan.store');
-            Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('kelas.store');
-            Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('angkatan.destroy');
-            Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('kelas.destroy');
+        
+
+   Route::prefix('master-data')->group(function () {
+    Route::get('/', [MasterTambahanController::class, 'index'])->name('master.index');
+    Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('master.angkatan.store');
+    Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('master.kelas.store');
+    Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('master.angkatan.destroy');
+    Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('master.kelas.destroy');
         });
     });
 });
