@@ -100,30 +100,7 @@ class DataMasterController extends Controller
     /**
      * STORE: Simpan santri baru ke database (Sudah ada NIM)
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
-            'nim'          => 'required|string|unique:santriwatis,nim', // Validasi NIM
-            'username'     => 'required|string|unique:santriwatis,username',
-            'password'     => 'required|min:6',
-            'rfid_id'      => 'required|string|unique:santriwatis,rfid_id',
-            'angkatan'     => 'required',
-            'kelas'        => 'required',
-        ]);
-
-        Santriwati::create([
-            'nama_lengkap' => strtoupper($request->nama_lengkap),
-            'nim'          => $request->nim, // Input NIM
-            'username'     => $request->username,
-            'password'     => Hash::make($request->password), // Enkripsi password
-            'rfid_id'      => $request->rfid_id,
-            'angkatan'     => $request->angkatan,
-            'kelas'        => $request->kelas,
-        ]);
-
-        return redirect()->route('santri.index')->with('success', 'Santriwati berhasil ditambahkan!');
-    }
+    
 
     public function edit($id)
     {
@@ -173,4 +150,38 @@ class DataMasterController extends Controller
         $santri->delete();
         return redirect()->route('santri.index')->with('success', 'Data santriwati berhasil dihapus!');
     }
+    public function store(Request $request)
+{
+    $request->validate([
+        'nama_lengkap' => 'required|string|max:255',
+        'nim'          => 'required|string|unique:santriwatis,nim',
+        'username'     => 'required|string|unique:users,username', // Cek unik di tabel users
+        'password'     => 'required|min:6',
+        'rfid_id'      => 'required|string|unique:santriwatis,rfid_id',
+        'angkatan'     => 'required',
+        'kelas'        => 'required',
+    ]);
+
+    // 1. Simpan ke tabel santriwatis (Data Administratif)
+    $santri = \App\Models\Santriwati::create([
+        'nama_lengkap' => strtoupper($request->nama_lengkap),
+        'nim'          => $request->nim,
+        'username'     => $request->username,
+        'password'     => $request->password, // Hanya arsip (bukan untuk login)
+        'rfid_id'      => $request->rfid_id,
+        'angkatan'     => $request->angkatan,
+        'kelas'        => $request->kelas,
+    ]);
+
+    // 2. OTOMATIS: Simpan ke tabel users agar BISA LOGIN
+    \App\Models\User::create([
+        'nama_lengkap'  => $santri->nama_lengkap,
+        'username'      => $request->username,
+        'password'      => \Illuminate\Support\Facades\Hash::make($request->password), // Di-hash otomatis
+        'role'          => 'Santri',
+        'santriwati_id' => $santri->id, // Jembatan ID otomatis
+    ]);
+
+    return redirect()->route('santri.index')->with('success', 'Santriwati dan Akun Login berhasil dibuat!');
+}
 }

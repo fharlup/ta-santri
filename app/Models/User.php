@@ -23,6 +23,7 @@ class User extends Authenticatable
     'email',
     'password',
     'role', 
+    'santriwati_id'
     ];
 public function logs() {
     return $this->hasMany(Log::class);
