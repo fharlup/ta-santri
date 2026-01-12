@@ -86,6 +86,7 @@ public function riwayat(Request $request)
 
     return view('kesiswaan.presensi.riwayat', compact('presensis'));
 }
+
 public function edit($id)
 {
     $presensi = Presensi::with(['santriwati', 'kegiatan'])->findOrFail($id);

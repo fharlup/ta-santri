@@ -25,32 +25,42 @@
     {{-- FILTER SECTION --}}
     <div class="mb-8 bg-white p-6 rounded-[30px] shadow-sm border border-gray-100">
         <form action="{{ route('penilaian.rekap') }}" method="GET" class="flex flex-wrap items-end gap-6">
+            {{-- SEARCH NAMA --}}
+            <div class="flex-[2] min-w-[250px]">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cari Nama Santriwati</label>
+                <div class="relative">
+                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Masukkan nama..." 
+                           class="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-5 py-3 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
+                </div>
+            </div>
+
             {{-- Filter Angkatan --}}
-            <div class="flex-1 min-w-[200px]">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Pilih Angkatan</label>
+            <div class="flex-1 min-w-[150px]">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Angkatan</label>
                 <select name="angkatan" class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
-                    <option value="">Semua Angkatan</option>
+                    <option value="">Semua</option>
                     @foreach($allAngkatan as $a)
-                        <option value="{{ $a }}" {{ request('angkatan') == $a ? 'selected' : '' }}>Angkatan {{ $a }}</option>
+                        <option value="{{ $a }}" {{ request('angkatan') == $a ? 'selected' : '' }}>{{ $a }}</option>
                     @endforeach
                 </select>
             </div>
 
             {{-- Filter Tanggal --}}
-            <div class="flex-1 min-w-[200px]">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Tanggal Penilaian</label>
+            <div class="flex-1 min-w-[150px]">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Tanggal</label>
                 <input type="date" name="tanggal" value="{{ request('tanggal') }}" 
                        class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
             </div>
 
             {{-- Tombol Cari --}}
             <button type="submit" class="bg-[#1B763B] text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#473829] transition">
-                <i class="ph ph-magnifying-glass mr-2"></i> Cari Data
+                Cari Data
             </button>
             
             {{-- Reset --}}
-            @if(request('angkatan') || request('tanggal'))
-                <a href="{{ route('penilaian.rekap') }}" class="text-xs font-bold text-red-400 hover:text-red-600 uppercase underline decoration-2 underline-offset-4">Reset</a>
+            @if(request('search') || request('angkatan') || request('tanggal'))
+                <a href="{{ route('penilaian.rekap') }}" class="text-xs font-bold text-red-400 hover:text-red-600 uppercase underline decoration-2 underline-offset-4 mb-3">Reset</a>
             @endif
         </form>
     </div>
@@ -74,20 +84,16 @@
                     @forelse($penilaians as $p)
                     <tr class="hover:bg-gray-50 transition-colors group">
                         <td class="px-8 py-6 sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-sm">
-                            {{-- Mengambil Nama dari Relasi Santriwati --}}
                             <p class="font-black text-[#473829] uppercase text-sm leading-tight">{{ $p->santriwati->nama_lengkap ?? 'Tanpa Nama' }}</p>
                             <span class="text-[9px] font-bold text-gray-300 uppercase italic">
-                                {{-- Mengambil Angkatan dari Kolom Penilaian (Real-time data) --}}
                                 Angkatan {{ $p->angkatan }} | {{ \Carbon\Carbon::parse($p->tanggal)->format('d/m/Y') }}
                             </span>
                         </td>
                         
-                        {{-- Looping Kategori Penilaian Sesuai Database --}}
                         @foreach(['adab', 'disiplin', 'tanggung_jawab', 'integritas_kesabaran', 'integritas_kejujuran'] as $field)
                         <td class="px-4 py-6 text-center">
                             @php
                                 $val = $p->$field;
-                                // Logika Warna: A (Hijau), B (Abu-abu), C (Merah)
                                 $color = $val == 'A' ? 'bg-green-100 text-green-600' : ($val == 'C' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500');
                             @endphp
                             <span class="inline-block w-8 h-8 leading-8 rounded-lg font-black text-xs {{ $color }}">
@@ -97,25 +103,15 @@
                         @endforeach
 
                         <td class="px-6 py-6 text-center">
-                            <div class="flex justify-center items-center gap-2">
-                                <a href="{{ route('penilaian.edit', $p->id) }}" class="text-[#473829] hover:text-[#1B763B] transition">
-                                    <i class="ph ph-note-pencil text-xl"></i>
-                                </a>
-                                {{-- Tombol Hapus (Opsional) --}}
-                                <form action="{{ route('penilaian.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Hapus data penilaian ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-400 hover:text-red-600 transition">
-                                        <i class="ph ph-trash text-xl"></i>
-                                    </button>
-                                </form>
-                            </div>
+                            <a href="{{ route('penilaian.edit', $p->id) }}" class="text-[#473829] hover:text-[#1B763B] transition">
+                                <i class="ph ph-note-pencil text-xl"></i>
+                            </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
                         <td colspan="7" class="px-8 py-20 text-center text-gray-400 font-bold italic uppercase text-xs">
-                            Data tidak ditemukan pada filter ini.
+                            Data tidak ditemukan untuk pencarian "{{ request('search') }}".
                         </td>
                     </tr>
                     @endforelse

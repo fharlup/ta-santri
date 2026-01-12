@@ -125,27 +125,35 @@ public function export(Request $request)
 
     return Excel::download(new PenilaianExport($exportData, $namaUstadzahOnly), $namaFile);
 }
+
 public function rekap(Request $request)
 {
-    // 1. Ambil pilihan Angkatan asli dari tabel santriwatis
+    // 1. Ambil pilihan Angkatan asli dari database
     $allAngkatan = \App\Models\Santriwati::distinct()->pluck('angkatan');
 
-    // 2. Query data penilaian asli dengan Eager Loading agar tidak berat
-    $query = \App\Models\Penilaian::with(['santriwati', 'user']);
+    // 2. Query data penilaian dengan relasi santriwati
+    $query = \App\Models\Penilaian::with('santriwati');
 
-    // 3. Filter Angkatan (Hanya jika user memilih di dropdown)
+    // 3. FITUR SEARCH NAMA (Baru)
+    if ($request->filled('search')) {
+        $query->whereHas('santriwati', function($q) use ($request) {
+            $q->where('nama_lengkap', 'like', '%' . $request->search . '%');
+        });
+    }
+
+    // 4. Filter Angkatan
     if ($request->filled('angkatan')) {
         $query->whereHas('santriwati', function($q) use ($request) {
             $q->where('angkatan', $request->angkatan);
         });
     }
 
-    // 4. Filter Tanggal (Hanya jika user memilih tanggal)
+    // 5. Filter Tanggal
     if ($request->filled('tanggal')) {
         $query->whereDate('tanggal', $request->tanggal);
     }
 
-    // 5. Ambil data asli, urutkan dari yang terbaru
+    // Ambil data terbaru
     $penilaians = $query->latest('tanggal')->get();
 
     return view('kesiswaan.penilaian.rekap', compact('penilaians', 'allAngkatan'));

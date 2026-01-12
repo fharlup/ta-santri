@@ -1,6 +1,41 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- SEARCH & FILTER SECTION --}}
+<div class="mb-8 bg-white p-6 rounded-[30px] shadow-sm border border-gray-100">
+    <form action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-end gap-6">
+        {{-- SEARCH NAMA PENGGUNA --}}
+        <div class="flex-[2] min-w-[300px]">
+            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cari Nama Pengguna</label>
+            <div class="relative">
+                <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Ketik nama ustadzah..." 
+                       class="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-5 py-3.5 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
+            </div>
+        </div>
+
+        {{-- FILTER ROLE --}}
+        <div class="flex-1 min-w-[200px]">
+            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Pilih Role</label>
+            <select name="role" onchange="this.form.submit()" class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 font-bold text-[#473829] outline-none">
+                <option value="">Semua Role</option>
+                <option value="Kesiswaan" {{ request('role') == 'Kesiswaan' ? 'selected' : '' }}>Kesiswaan</option>
+                <option value="Komdis" {{ request('role') == 'Komdis' ? 'selected' : '' }}>Komdis</option>
+                <option value="Wali Kelas" {{ request('role') == 'Wali Kelas' ? 'selected' : '' }}>Wali Kelas</option>
+            </select>
+        </div>
+
+        {{-- Tombol Cari --}}
+        <button type="submit" class="bg-[#1B763B] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-lg hover:bg-[#473829] transition">
+            Cari
+        </button>
+        
+        {{-- Reset --}}
+        @if(request('search') || request('role'))
+            <a href="{{ route('users.index') }}" class="text-xs font-bold text-red-400 hover:text-red-600 uppercase underline decoration-2 underline-offset-4 mb-4">Reset</a>
+        @endif
+    </form>
+</div>
 <div class="space-y-8">
     <div class="flex items-center justify-between">
         <h1 class="font-berkshire text-5xl text-[#473829]">Manajemen Pengguna</h1>

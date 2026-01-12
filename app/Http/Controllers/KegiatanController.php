@@ -10,21 +10,6 @@ use Illuminate\Support\Facades\Auth;
 class KegiatanController extends Controller
 {
     // FR-02 & FR-08: Melihat daftar kegiatan
-public function index()
-    {
-        // Hanya tampilkan jadwal unik berdasarkan nama dan jam
-     
-     
-        // ATAU filter berdasarkan tanggal hari ini:
-        $kegiatans = Kegiatan::orderBy('jam', 'asc')
-        ->get()
-        ->unique(function ($item) {
-            // Gabungkan nama dan jam sebagai kunci unik
-            return $item->nama_kegiatan . $item->jam;
-        });
-
-    return view('kesiswaan.kegiatan.index', compact('kegiatans'));
-    }
     public function create() {
         return view('kesiswaan.kegiatan.create');
     }
@@ -99,4 +84,19 @@ public function index()
         Kegiatan::findOrFail($id)->delete();
         return redirect()->route('kegiatan.index')->with('success', 'Kegiatan dihapus');
     } 
+public function index(Request $request)
+{
+    // 1. Inisialisasi query
+    $query = \App\Models\Kegiatan::query();
+
+    // 2. Logika Search Nama Kegiatan
+    if ($request->filled('search')) {
+        $query->where('nama_kegiatan', 'like', '%' . $request->search . '%');
+    }
+
+    // 3. Ambil data dengan urutan jam terkecil (paling awal)
+    $kegiatans = $query->orderBy('jam', 'asc')->get();
+
+    return view('kesiswaan.kegiatan.index', compact('kegiatans'));
+}
 }

@@ -8,10 +8,22 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index() {
-        $users = User::latest()->get();
-        return view('kesiswaan.user.index', compact('users'));
+   public function index(Request $request) { // 2. Tambahkan (Request $request)
+    $query = User::query();
+
+    if ($request->filled('search')) {
+        $query->where('nama_lengkap', 'like', '%' . $request->search . '%');
     }
+
+    if ($request->filled('role')) {
+        $query->where('role', $request->role);
+    }
+
+    $users = $query->latest()->get();
+
+    // 3. PENTING: Gunakan 'user.index' (tanpa S) sesuai folder Anda
+    return view('kesiswaan.user.index', compact('users'));
+} 
 
     public function create() {
         return view('kesiswaan.user.create');

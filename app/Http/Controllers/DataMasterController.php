@@ -51,12 +51,26 @@ public function dashboard()
     /**
      * INDEX: Daftar semua santriwati
      */
-    public function index()
-    {
-        $santris = Santriwati::latest()->get();
-        return view('kesiswaan.santri.index', compact('santris'));
+
+ public function index(Request $request)
+{
+    $allAngkatan = \App\Models\Santriwati::distinct()->pluck('angkatan');
+    $query = \App\Models\Santriwati::query();
+
+    // Logika Search Nama
+    if ($request->filled('search')) {
+        $query->where('nama_lengkap', 'like', '%' . $request->search . '%');
     }
 
+    // Filter Angkatan
+    if ($request->filled('angkatan')) {
+        $query->where('angkatan', $request->angkatan);
+    }
+
+    $santris = $query->latest()->paginate(20);
+
+    return view('kesiswaan.santri.index', compact('santris', 'allAngkatan'));
+}
     /**
      * CREATE: Form tambah santri (Sinkron dengan Master Angkatan & Kelas)
      */
