@@ -16,6 +16,7 @@ class DataMasterController extends Controller
      */
 public function dashboard()
 {
+    $user = auth()->user();
     $today = now()->format('Y-m-d');
 
     // 1. Grafik Harian (Susun jam 04:00 hingga 21:00 supaya teratur)
