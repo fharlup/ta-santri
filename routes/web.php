@@ -31,49 +31,49 @@ Route::middleware('auth')->group(function () {
         ->name('kesiswaan.dashboard');
 
     /* |--------------------------------------------------------------------------
-    | 3. OPERASIONAL (Kesiswaan, Komdis, Wali Kelas, Musyrifah)
+    | 3. PRESENSI (Kesiswaan, Komdis, Wali Kelas, Musyrifah)
     |--------------------------------------------------------------------------
-    | Bagian ini disembunyikan dari role 'Santri' di Sidebar.
     */
-    Route::middleware('role:Kesiswaan,Komdis,Wali Kelas,Musyrifah')->group(function () {
-
-        // --- PRESENSI ---
-        Route::prefix('presensi')->name('presensi.')->group(function () {
-            Route::get('/scan', [PresensiController::class, 'scanPage'])->name('scan');
-            Route::post('/check', [PresensiController::class, 'checkRfid'])->name('check');
-            Route::get('/riwayat', [PresensiController::class, 'riwayat'])->name('riwayat');
-            Route::get('/rekap', [KesiswaanController::class, 'rekapPresensi'])->name('rekap');
-            Route::get('/export', [KesiswaanController::class, 'exportPresensi'])->name('export');
-            
-            // Perbaikan rute edit agar tidak error di halaman riwayat
-            Route::get('/{id}/edit', [PresensiController::class, 'edit'])->name('edit');
-            Route::put('/{id}/update', [PresensiController::class, 'update'])->name('update');
-        });
-        Route::prefix('master-tambahan')->name('master_tambahan.')->group(function () {
-            Route::get('/', [MasterTambahanController::class, 'index'])->name('index');
-            Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('angkatan.store');
-            Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('kelas.store');
-            Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('angkatan.destroy');
-            Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('kelas.destroy');
-        });
-
-        // --- PENILAIAN ---
-        Route::prefix('penilaian')->name('penilaian.')->group(function () {
-            Route::get('/create', [PenilaianController::class, 'create'])->name('create');
-            Route::post('/store', [PenilaianController::class, 'store'])->name('store');
-            Route::get('/rekap', [PenilaianController::class, 'rekap'])->name('rekap');
-            Route::get('/export', [PenilaianController::class, 'export'])->name('export');
-            Route::get('/riwayat', [PenilaianController::class, 'riwayat'])->name('riwayat');
-            Route::get('/{id}/edit', [PenilaianController::class, 'edit'])->name('edit');
-            Route::put('/{id}/update', [PenilaianController::class, 'update'])->name('update');
-            Route::delete('/{id}/destroy', [PenilaianController::class, 'destroy'])->name('destroy');
-        });
+    Route::middleware('role:Kesiswaan,Komdis,Wali Kelas,Musyrifah')->prefix('presensi')->name('presensi.')->group(function () {
+        Route::get('/scan', [PresensiController::class, 'scanPage'])->name('scan');
+        Route::post('/check', [PresensiController::class, 'checkRfid'])->name('check');
+        Route::get('/riwayat', [PresensiController::class, 'riwayat'])->name('riwayat');
+        Route::get('/rekap', [KesiswaanController::class, 'rekapPresensi'])->name('rekap');
+        Route::get('/export', [KesiswaanController::class, 'exportPresensi'])->name('export');
+        Route::get('/{id}/edit', [PresensiController::class, 'edit'])->name('edit');
+        Route::put('/{id}/update', [PresensiController::class, 'update'])->name('update');
     });
 
     /* |--------------------------------------------------------------------------
-    | 4. MANAJEMEN (KHUSUS Kesiswaan/Admin)
+    | 4. PENILAIAN (Kesiswaan, Komdis, Wali Kelas, Musyrifah)
     |--------------------------------------------------------------------------
-    | Bagian ini disembunyikan total dari role lain.
+    */
+    Route::middleware(['auth', 'role:Kesiswaan,Komdis,Wali Kelas,Musyrifah'])->prefix('penilaian')->name('penilaian.')->group(function () {
+        Route::get('/create', [PenilaianController::class, 'create'])->name('create');
+        Route::post('/store', [PenilaianController::class, 'store'])->name('store');
+        Route::get('/rekap', [PenilaianController::class, 'rekap'])->name('rekap');
+        Route::get('/export', [PenilaianController::class, 'export'])->name('export');
+        Route::get('/riwayat', [PenilaianController::class, 'riwayat'])->name('riwayat');
+        Route::get('/{id}/edit', [PenilaianController::class, 'edit'])->name('edit');
+        Route::put('/{id}/update', [PenilaianController::class, 'update'])->name('update');
+        Route::delete('/{id}/destroy', [PenilaianController::class, 'destroy'])->name('destroy');
+    });
+
+    /* |--------------------------------------------------------------------------
+    | 5. MASTER TAMBAHAN (Kesiswaan, Komdis, Wali Kelas, Musyrifah)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:Kesiswaan,Komdis,Wali Kelas,Musyrifah')->prefix('master-tambahan')->name('master_tambahan.')->group(function () {
+        Route::get('/', [MasterTambahanController::class, 'index'])->name('index');
+        Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('angkatan.store');
+        Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('kelas.store');
+        Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('angkatan.destroy');
+        Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('kelas.destroy');
+    });
+
+    /* |--------------------------------------------------------------------------
+    | 6. MANAJEMEN (KHUSUS Kesiswaan/Admin)
+    |--------------------------------------------------------------------------
     */
     Route::middleware('role:Kesiswaan')->prefix('kesiswaan')->group(function () {
 
@@ -90,16 +90,14 @@ Route::middleware('auth')->group(function () {
         // Manajemen Pengguna & Kegiatan (Resource)
         Route::resource('user', UserController::class);
         Route::resource('kegiatan', KegiatanController::class);
-        // --- MASTER TAMBAHAN (Angkatan & Kelas) ---
-        // Sinkron dengan folder resources/views/kesiswaan/master_tambahan
         
-
-   Route::prefix('master-data')->group(function () {
-    Route::get('/', [MasterTambahanController::class, 'index'])->name('master.index');
-    Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('master.angkatan.store');
-    Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('master.kelas.store');
-    Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('master.angkatan.destroy');
-    Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('master.kelas.destroy');
+        // --- MASTER DATA (Angkatan & Kelas) ---
+        Route::prefix('master-data')->group(function () {
+            Route::get('/', [MasterTambahanController::class, 'index'])->name('master.index');
+            Route::post('/angkatan', [MasterTambahanController::class, 'storeAngkatan'])->name('master.angkatan.store');
+            Route::post('/kelas', [MasterTambahanController::class, 'storeKelas'])->name('master.kelas.store');
+            Route::delete('/angkatan/{id}', [MasterTambahanController::class, 'destroyAngkatan'])->name('master.angkatan.destroy');
+            Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('master.kelas.destroy');
         });
     });
 });
