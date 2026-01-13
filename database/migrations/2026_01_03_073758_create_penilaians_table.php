@@ -31,7 +31,6 @@ return new class extends Migration
     $table->char('integritas_mandiri', 1)->default('B');
     $table->char('integritas_optimis', 1)->default('B');
     $table->char('integritas_kejujuran', 1)->default('B');
-    $table->foreignId('santriwati_id')->constrained('santriwatis')->onDelete('cascade');
     $table->text('deskripsi')->nullable(); // Catatan tambahan
       $table->timestamps();
         });
