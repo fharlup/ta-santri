@@ -58,7 +58,8 @@
                 </a>
             @endif
 
-            @if(auth()->user()->role == 'Kesiswaan')
+            {{-- Manajemen untuk Kesiswaan dan Komdis --}}
+            @if(in_array(auth()->user()->role, ['Kesiswaan', 'Komdis']))
                 <p class="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] px-4 mt-6 mb-2">Manajemen</p>
                 <a href="{{ route('kegiatan.index') }}" class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*kegiatan*') ? 'bg-[#1B763B] font-bold' : 'text-white/60 hover:bg-white/5' }}">
                     <i class="ph ph-calendar-check mr-3 text-xl"></i> Manajemen Kegiatan
@@ -66,13 +67,17 @@
                 <a href="{{ route('santri.index') }}" class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*santri*') ? 'bg-[#1B763B] font-bold' : 'text-white/60 hover:bg-white/5' }}">
                     <i class="ph ph-users-four mr-3 text-xl"></i> Manajemen Santriwati
                 </a>
+            @endif
+
+            {{-- Khusus Kesiswaan --}}
+            @if(auth()->user()->role == 'Kesiswaan')
                 <a href="{{ route('user.index') }}" class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*user*') ? 'bg-[#1B763B] font-bold' : 'text-white/60 hover:bg-white/5' }}">
                     <i class="ph ph-user-gear mr-3 text-xl"></i> Manajemen Pengguna
                 </a>
                 <a href="{{ route('master.index') }}" 
-   class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*master-data*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
-    <i class="ph ph-list-numbers mr-3 text-xl"></i> Master Angkatan & Kelas
-</a>
+                   class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*master-data*') ? 'bg-[#1B763B] shadow-lg font-bold' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                    <i class="ph ph-list-numbers mr-3 text-xl"></i> Master Angkatan & Kelas
+                </a>
 
                 <a href="{{ route('presensi.export') }}" class="flex items-center px-4 py-3 rounded-2xl text-[#8BC53F] border border-[#8BC53F]/20 mt-4 hover:bg-[#8BC53F] hover:text-white transition">
                     <i class="ph ph-file-xls mr-3 text-xl"></i> <span class="text-xs font-bold uppercase">Export Laporan</span>
