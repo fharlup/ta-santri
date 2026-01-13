@@ -22,8 +22,16 @@
     {{-- FILTER SECTION --}}
     <div class="mb-8 bg-white p-6 rounded-[30px] shadow-sm border border-gray-100">
         <form action="{{ route('presensi.riwayat') }}" method="GET" class="flex flex-wrap items-end gap-6">
-            {{-- Filter Angkatan --}}
+            
+            {{-- FILTER NAMA (BARU DITAMBAHKAN) --}}
             <div class="flex-1 min-w-[200px]">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cari Nama Santri</label>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Masukkan nama..."
+                       class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
+            </div>
+
+            {{-- Filter Angkatan --}}
+            <div class="flex-1 min-w-[150px]">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Pilih Angkatan</label>
                 <select name="angkatan" onchange="this.form.submit()" class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
                     <option value="">Semua Angkatan</option>
@@ -34,7 +42,7 @@
             </div>
 
             {{-- Filter Tanggal --}}
-            <div class="flex-1 min-w-[200px]">
+            <div class="flex-1 min-w-[180px]">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Tanggal Presensi</label>
                 <input type="date" name="tanggal" value="{{ request('tanggal') }}" onchange="this.form.submit()"
                        class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 font-bold text-[#473829] outline-none focus:ring-2 focus:ring-[#1B763B] transition">
@@ -45,13 +53,14 @@
                 <i class="ph ph-magnifying-glass mr-2"></i> Cari
             </button>
             
-            @if(request('angkatan') || request('tanggal'))
+            {{-- Tombol Reset (Ditambah pengecekan 'search') --}}
+            @if(request('angkatan') || request('tanggal') || request('search'))
                 <a href="{{ route('presensi.riwayat') }}" class="text-xs font-bold text-red-400 hover:text-red-600 uppercase underline decoration-2 underline-offset-4">Reset</a>
             @endif
         </form>
     </div>
 
-    {{-- TABEL DATA --}}
+    {{-- TABEL DATA (Tetap sama seperti kode ustadz) --}}
     <div class="bg-white rounded-[50px] shadow-2xl border-t-[15px] border-[#1B763B] overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -61,7 +70,6 @@
                         <th class="px-4 py-8 text-[10px] font-black text-[#1B763B] uppercase text-center">Waktu Scan</th>
                         <th class="px-4 py-8 text-[10px] font-black text-[#1B763B] uppercase text-center">Status</th>
                         <th class="px-6 py-8 text-[10px] font-black text-gray-400 uppercase">Keterangan</th>
-                        {{-- Kolom Aksi yang Ditambahkan Kembali --}}
                         <th class="px-6 py-8 text-[10px] font-black text-gray-400 uppercase text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -76,12 +84,11 @@
                                 Angkatan {{ $p->santriwati->angkatan ?? '-' }} | {{ $p->kegiatan->nama_kegiatan ?? 'Tanpa Nama Kegiatan' }}
                             </span>
                         </td>
-
+                        {{-- ... sisanya sama ... --}}
                         <td class="px-4 py-6 text-center">
                             <p class="font-bold text-[#473829] text-sm">{{ \Carbon\Carbon::parse($p->waktu_scan)->format('H:i:s') }}</p>
                             <p class="text-[9px] text-gray-400 font-bold uppercase">{{ \Carbon\Carbon::parse($p->waktu_scan)->format('d/m/Y') }}</p>
                         </td>
-
                         <td class="px-4 py-6 text-center">
                             @php
                                 $status = $p->status;
@@ -97,12 +104,9 @@
                                 {{ $status }}
                             </span>
                         </td>
-
                         <td class="px-6 py-6">
                             <p class="text-xs text-gray-500 font-medium italic">{{ $p->keterangan ?? '-' }}</p>
                         </td>
-
-                        {{-- Tombol Edit --}}
                         <td class="px-6 py-6 text-center">
                             <a href="{{ route('presensi.edit', $p->id) }}" class="text-[#473829] hover:text-[#1B763B] transition">
                                 <i class="ph ph-note-pencil text-xl"></i>

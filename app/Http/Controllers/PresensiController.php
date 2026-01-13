@@ -75,33 +75,40 @@ class PresensiController extends Controller
      */
     public function riwayat(Request $request)
     {
+        // 1. Ambil semua daftar angkatan unik untuk dropdown filter
         $allAngkatan = Santriwati::distinct()->whereNotNull('angkatan')->pluck('angkatan');
+        
+        // 2. Mulai Query dengan Eager Loading relasi santriwati dan kegiatan
         $query = Presensi::with(['santriwati', 'kegiatan']);
 
+        // 3. Filter Pencarian Nama (Search)
         if ($request->filled('search')) {
             $query->whereHas('santriwati', function($q) use ($request) {
                 $q->where('nama_lengkap', 'like', '%' . $request->search . '%');
             });
         }
 
+        // 4. Filter Angkatan
         if ($request->filled('angkatan')) {
             $query->whereHas('santriwati', function($q) use ($request) {
                 $q->where('angkatan', $request->angkatan);
             });
         }
 
+        // 5. Filter Tanggal (Jika kosong, tampilkan data hari ini)
         if ($request->filled('tanggal')) {
             $query->whereDate('waktu_scan', $request->tanggal);
         } else {
+            // Jika ingin pencarian nama bisa lintas tanggal, bagian else ini bisa dihapus/dikomentari
             $query->whereDate('waktu_scan', Carbon::today());
         }
 
+        // 6. Ambil data dengan Pagination (20 data per halaman)
         $presensis = $query->latest('waktu_scan')->paginate(20);
 
         return view('kesiswaan.presensi.riwayat', compact('presensis', 'allAngkatan'));
     }
-
-    public function edit($id)
+      public function edit($id)
     {
         $presensi = Presensi::findOrFail($id);
         $kegiatans = Kegiatan::all();
