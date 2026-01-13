@@ -128,34 +128,50 @@ public function export(Request $request)
 
 public function rekap(Request $request)
 {
-    // 1. Ambil pilihan Angkatan asli dari database
-    $allAngkatan = \App\Models\Santriwati::distinct()->pluck('angkatan');
+    $tanggal = $request->input('tanggal', now()->format('Y-m-d'));
+    $angkatan = $request->input('angkatan');
+    $search = $request->input('search'); // Ambil input search
 
-    // 2. Query data penilaian dengan relasi santriwati
-    $query = \App\Models\Penilaian::with('santriwati');
+    // 1. Ambil list angkatan untuk dropdown filter
+    $allAngkatan = \App\Models\Angkatan::all();
 
-    // 3. FITUR SEARCH NAMA (Baru)
-    if ($request->filled('search')) {
-        $query->whereHas('santriwati', function($q) use ($request) {
-            $q->where('nama_lengkap', 'like', '%' . $request->search . '%');
-        });
+    // 2. Query Santriwati dengan filter nama dan angkatan
+    $santriwatis = \App\Models\Santriwati::query()
+        ->when($search, function($q) use ($search) {
+            return $q->where('nama_lengkap', 'like', '%' . $search . '%');
+        })
+        ->when($angkatan, function($q) use ($angkatan) {
+            return $q->where('angkatan', $angkatan);
+        })
+        ->get();
+
+    // 3. Ambil daftar kegiatan
+    $kegiatans = \App\Models\Kegiatan::all();
+    $listKegiatan = $kegiatans->pluck('nama_kegiatan')->toArray();
+
+    $rekapData = [];
+
+    foreach ($santriwatis as $s) {
+        $row = [
+            'nama' => $s->nama_lengkap,
+            'angkatan' => $s->angkatan,
+        ];
+
+        foreach ($kegiatans as $k) {
+            // Logika hitung persentase ustadz di sini...
+            // Contoh sederhana (pastikan disesuaikan dengan logika persentase asli ustadz):
+            $presensi = \App\Models\Presensi::where('santriwati_id', $s->id)
+                ->where('kegiatan_id', $k->id)
+                ->whereDate('waktu_scan', $tanggal)
+                ->first();
+
+            $row[$k->nama_kegiatan] = $presensi ? 100 : 0;
+        }
+
+        $rekapData[] = $row;
     }
 
-    // 4. Filter Angkatan
-    if ($request->filled('angkatan')) {
-        $query->whereHas('santriwati', function($q) use ($request) {
-            $q->where('angkatan', $request->angkatan);
-        });
-    }
-
-    // 5. Filter Tanggal
-    if ($request->filled('tanggal')) {
-        $query->whereDate('tanggal', $request->tanggal);
-    }
-
-    // Ambil data terbaru
-    $penilaians = $query->latest('tanggal')->get();
-
-    return view('kesiswaan.penilaian.rekap', compact('penilaians', 'allAngkatan'));
+    return view('kesiswaan.presensi.rekap', compact('rekapData', 'listKegiatan', 'allAngkatan'));
 }
+
 }
