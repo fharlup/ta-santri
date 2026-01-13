@@ -25,27 +25,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. SEEDER SANTRIWATI (Sesuai Gambar Anda)
-        $santris = [
-            ['nama' => 'Aisyah Humaira', 'nim' => '2026001', 'user' => 'aisyah', 'rfid' => 'RFID001', 'kelas' => '10-A', 'angkatan' => '2024'],
-            ['nama' => 'Zahra Fatimah', 'nim' => '2026002', 'user' => 'zahra', 'rfid' => 'RFID002', 'kelas' => '11-B', 'angkatan' => '2025'],
-            ['nama' => 'Khadijah Al-Kubra', 'nim' => '2026003', 'user' => 'khadijah', 'rfid' => 'RFID003', 'kelas' => '10-A', 'angkatan' => '2024'],
-            ['nama' => 'Fauzi Taufiq', 'nim' => '2026004', 'user' => 'fauzi', 'rfid' => 'RFID004', 'kelas' => 'TI-46-05', 'angkatan' => '2024'],
-        ];
-
-        foreach ($santris as $s) {
-            Santriwati::updateOrCreate(
-                ['nim' => $s['nim']],
-                [
-                    'nama_lengkap' => $s['nama'],
-                    'username' => $s['user'],
-                    'password' => Hash::make('santri123'),
-                    'kelas' => $s['kelas'],
-                    'rfid_id' => $s['rfid'],
-                    'angkatan' => $s['angkatan'] // Mendukung rekap per angkatan [cite: 11]
-                ]
-            );
-        }
 
         // 3. SEEDER 13 KEGIATAN WAJIB (Loop 7 Hari ke Belakang untuk Chart) 
         $namaKegiatan = [
