@@ -16,58 +16,63 @@ class DataMasterController extends Controller
     /**
      * DASHBOARD: Menampilkan statistik harian & grafik
      */
-    public function dashboard()
-    {
-        $user = Auth::user();
-        $today = now()->format('Y-m-d');
+public function dashboard()
+{
+    $user = auth()->user();
+    $today = now()->format('Y-m-d');
 
-        // --- 1. LOGIKA UNTUK ROLE SANTRI ---
-        if ($user->role == 'Santri') {
-            if (!$user->santriwati_id) {
-                return "Akun Anda belum terhubung dengan data Santriwati. Silakan hubungi bagian Kesiswaan.";
-            }
+    // --- 1. LOGIKA UNTUK ROLE SANTRI ---
+    if ($user->role == 'Santri' || $user->role == 'santri') {
+        // Cek apakah akun user sudah ditempelkan ID Santriwati
+        if (!$user->santriwati_id) {
+            return view('kesiswaan.dashboard')->with('error_link', 'Akun Anda belum terhubung dengan data Santriwati.');
+        }
 
-            $data = [
-                'total_hadir' => Presensi::where('santriwati_id', $user->santriwati_id)
-                                ->where('status', 'Hadir')->count(),
-                'nilai_terakhir' => Penilaian::where('santriwati_id', $user->santriwati_id)
+        $data = [
+            'total_hadir' => Presensi::where('santriwati_id', $user->santriwati_id)
+                                ->whereIn('status', ['Hadir', 'HADIR'])->count(),
+            
+            // INI NILAI KARAKTERNYA
+            'nilai_terakhir' => Penilaian::where('santriwati_id', $user->santriwati_id)
                                 ->latest()->first(),
-                'presensi' => Presensi::where('santriwati_id', $user->santriwati_id)
+            
+            'presensi' => Presensi::where('santriwati_id', $user->santriwati_id)
                                 ->with('kegiatan')->latest()->take(5)->get(),
-            ];
+        ];
 
-            return view('kesiswaan.dashboard', compact('data'));
-        }
-
-        // --- 2. LOGIKA UNTUK ROLE ADMIN (KESISWAAN/KOMDIS/WALI KELAS) ---
-        $chartData = ['labels' => [], 'values' => []];
-        for ($h = 4; $h <= 21; $h++) {
-            $labelJam = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
-            $chartData['labels'][] = $labelJam;
-            $chartData['values'][] = Presensi::whereDate('waktu_scan', $today)
-                                    ->whereRaw('HOUR(waktu_scan) = ?', [$h])
-                                    ->count();
-        }
-
-        $weeklyData = ['labels' => [], 'values' => []];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i);
-            $weeklyData['labels'][] = $date->translatedFormat('d M'); 
-            $weeklyData['values'][] = Presensi::whereDate('waktu_scan', $date->format('Y-m-d'))
-                                     ->distinct('santriwati_id')->count();
-        }
-
-        $totalSantri = Santriwati::count();
-        $hadirHariIni = Presensi::whereDate('waktu_scan', $today)->distinct('santriwati_id')->count();
-        $terlambatHariIni = Presensi::whereDate('waktu_scan', $today)->where('status', 'TELAT')->count();
-        $tidakHadir = max(0, $totalSantri - $hadirHariIni);
-
-        return view('kesiswaan.dashboard', compact(
-            'chartData', 'weeklyData', 'hadirHariIni', 
-            'terlambatHariIni', 'tidakHadir', 'totalSantri'
-        ));
+        return view('kesiswaan.dashboard', compact('data'));
     }
 
+    // --- 2. LOGIKA UNTUK ROLE ADMIN (KESISWAAN/KOMDIS) ---
+    // Grafik Jam (4 pagi sampai 9 malam)
+    $chartData = ['labels' => [], 'values' => []];
+    for ($h = 4; $h <= 21; $h++) {
+        $labelJam = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
+        $chartData['labels'][] = $labelJam;
+        $chartData['values'][] = Presensi::whereDate('waktu_scan', $today)
+                                    ->whereRaw('HOUR(waktu_scan) = ?', [$h])
+                                    ->count();
+    }
+
+    // Grafik Mingguan (7 hari terakhir)
+    $weeklyData = ['labels' => [], 'values' => []];
+    for ($i = 6; $i >= 0; $i--) {
+        $date = now()->subDays($i);
+        $weeklyData['labels'][] = $date->translatedFormat('d M'); 
+        $weeklyData['values'][] = Presensi::whereDate('waktu_scan', $date->format('Y-m-d'))
+                                     ->distinct('santriwati_id')->count();
+    }
+
+    $totalSantri = Santriwati::count();
+    $hadirHariIni = Presensi::whereDate('waktu_scan', $today)->distinct('santriwati_id')->count();
+    $terlambatHariIni = Presensi::whereDate('waktu_scan', $today)->whereIn('status', ['TELAT', 'Telat'])->count();
+    $tidakHadir = max(0, $totalSantri - $hadirHariIni);
+
+    return view('kesiswaan.dashboard', compact(
+        'chartData', 'weeklyData', 'hadirHariIni', 
+        'terlambatHariIni', 'tidakHadir', 'totalSantri'
+    ));
+}
     /**
      * INDEX: Daftar santriwati dengan fitur Search & Filter
      */
