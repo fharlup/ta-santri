@@ -72,10 +72,10 @@ Route::middleware('auth')->group(function () {
     });
 
     /* |--------------------------------------------------------------------------
-    | 6. MANAJEMEN (KHUSUS Kesiswaan/Admin)
+    | 6. MANAJEMEN (Kesiswaan & Komdis)
     |--------------------------------------------------------------------------
     */
-    Route::middleware('role:Kesiswaan')->prefix('kesiswaan')->group(function () {
+    Route::middleware('role:Kesiswaan,Komdis')->prefix('kesiswaan')->group(function () {
 
         // Manajemen Santriwati
         Route::prefix('santri')->name('santri.')->group(function () {
@@ -87,9 +87,18 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{id}/hapus', [DataMasterController::class, 'destroy'])->name('destroy');
         });
 
-        // Manajemen Pengguna & Kegiatan (Resource)
-        Route::resource('user', UserController::class);
+        // Manajemen Kegiatan
         Route::resource('kegiatan', KegiatanController::class);
+    });
+
+    /* |--------------------------------------------------------------------------
+    | 7. MANAJEMEN USER & MASTER DATA (KHUSUS Kesiswaan)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:Kesiswaan')->prefix('kesiswaan')->group(function () {
+
+        // Manajemen Pengguna (User)
+        Route::resource('user', UserController::class);
         
         // --- MASTER DATA (Angkatan & Kelas) ---
         Route::prefix('master-data')->group(function () {
