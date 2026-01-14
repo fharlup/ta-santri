@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Santriwati;
 use App\Models\Penilaian;
+use App\Models\Angkatan;
+use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\Kegiatan;    
 use App\Exports\PenilaianExport;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Presensi;
-use Carbon\Carbon;
-use App\Models\User;          // Tambahkan ini
+
 class PenilaianController extends Controller
 {
     public function create()
@@ -19,159 +18,91 @@ class PenilaianController extends Controller
         return view('kesiswaan.penilaian.create', compact('santris'));
     }
 
- 
-    
-public function store(Request $request)
-{
-    // 1. Validasi dasar
-    $request->validate([
-        'santriwati_id' => 'required|exists:santriwatis,id',
-        'tanggal' => 'required',
-    ]);
+    public function store(Request $request)
+    {
+        $request->validate([
+            'santriwati_id' => 'required|exists:santriwatis,id',
+            'tanggal' => 'required|date',
+        ]);
 
-    // 2. Ambil data santri secara otomatis untuk mendapatkan 'angkatan'
-    $santri = \App\Models\Santriwati::findOrFail($request->santriwati_id);
+        $santri = Santriwati::findOrFail($request->santriwati_id);
 
-    // 3. Simpan data ke database
-    \App\Models\Penilaian::create([
-        'santriwati_id'         => $santri->id,
-        'user_id'               => auth()->id(),
-        'tanggal'               => $request->tanggal,
-        'angkatan'              => $santri->angkatan, // OTOMATIS mengambil dari data santri
-        'disiplin'              => $request->disiplin ?? 'B',
-        'k3'                    => $request->k3 ?? 'B',
-        'tanggung_jawab'        => $request->tanggung_jawab ?? 'B',
-        'inisiatif_kreatifitas' => $request->inisiatif_kreatifitas ?? 'B',
-        'adab'                  => $request->adab ?? 'B',
-        'berterate'             => $request->berterate ?? 'B',
-        'integritas_kesabaran'  => $request->integritas_kesabaran ?? 'B',
-        'integritas_produktif'  => $request->integritas_produktif ?? 'B',
-        'integritas_mandiri'    => $request->integritas_mandiri ?? 'B',
-        'integritas_optimis'    => $request->integritas_optimis ?? 'B',
-        'integritas_kejujuran'  => $request->integritas_kejujuran ?? 'B',
-        'deskripsi'             => $request->deskripsi,
-    ]);
+        Penilaian::create([
+            'santriwati_id'         => $santri->id,
+            'user_id'               => auth()->id(),
+            'tanggal'               => $request->tanggal,
+            'angkatan'              => $santri->angkatan,
+            'disiplin'              => $request->disiplin ?? 'B',
+            'k3'                    => $request->k3 ?? 'B',
+            'tanggung_jawab'        => $request->tanggung_jawab ?? 'B',
+            'inisiatif_kreatifitas' => $request->inisiatif_kreatifitas ?? 'B',
+            'adab'                  => $request->adab ?? 'B',
+            'berterate'             => $request->berterate ?? 'B',
+            'integritas_kesabaran'  => $request->integritas_kesabaran ?? 'B',
+            'integritas_produktif'  => $request->integritas_produktif ?? 'B',
+            'integritas_mandiri'    => $request->integritas_mandiri ?? 'B',
+            'integritas_optimis'    => $request->integritas_optimis ?? 'B',
+            'integritas_kejujuran'  => $request->integritas_kejujuran ?? 'B',
+            'deskripsi'             => $request->deskripsi,
+        ]);
 
-    return redirect()->route('penilaian.rekap')->with('success', 'Penilaian berhasil disimpan!');
-}
-
-public function update(Request $request, $id)
-{
-    $penilaian = Penilaian::findOrFail($id);
-    
-    $validated = $request->validate([
-        'santriwati_id' => 'required',
-        'tanggal' => 'required|date',
-        'angkatan' => 'required',
-        'disiplin' => 'required',
-        'k3' => 'required',
-        'tanggung_jawab' => 'required',
-        'inisiatif_kreativitas' => 'required',
-        'adab' => 'required',
-        'berterate' => 'required',
-        'kesabaran' => 'required',
-        'produktif' => 'required',
-        'mandiri' => 'required',
-        'optimis' => 'required',
-        'kejujuran' => 'required',
-        'deskripsi' => 'nullable'
-    ]);
-
-    $penilaian->update($validated);
-
-    return redirect()->route('penilaian.riwayat')->with('success', 'Data penilaian berhasil diperbarui');
-}
-
-public function export(Request $request)
-{
-    // 1. Ambil daftar User (Ustadzah) agar kolom otomatis bertambah
-    $listUstadzah = User::whereIn('role', ['Kesiswaan', 'Komdis', 'Wali Kelas'])
-                    ->get(['id', 'nama_lengkap']);
-
-    // 2. Ambil data Santri dengan filter yang sama dengan Rekap (opsional)
-    $querySantri = Santriwati::query();
-    if ($request->filled('angkatan')) {
-        $querySantri->where('angkatan', $request->angkatan);
-    }
-    $santris = $querySantri->get();
-
-    $exportData = [];
-    $filterTanggal = $request->input('tanggal');
-
-    foreach ($santris as $santri) {
-        $row = [
-            'nama' => $santri->nama_lengkap,
-            'angkatan' => $santri->angkatan,
-        ];
-
-        foreach ($listUstadzah as $ustadzah) {
-            $queryPenilaian = Penilaian::where('santriwati_id', $santri->id)
-                ->where('user_id', $ustadzah->id);
-
-            if ($filterTanggal) {
-                $queryPenilaian->whereDate('tanggal', $filterTanggal);
-            }
-
-            // Jumlahkan semua kategori kategori (Dinamis)
-            $row[$ustadzah->nama_lengkap] = $queryPenilaian->selectRaw('SUM(disiplin + k3 + tanggung_jawab + inisiatif_kreatifitas + adab + berterate + integritas_kesabaran + integritas_produktif + integritas_mandiri + integritas_optimis + integritas_kejujuran) as total')
-                ->value('total') ?? 0;
-        }
-        $exportData[] = $row;
+        return redirect()->route('penilaian.rekap')->with('success', 'Penilaian berhasil disimpan!');
     }
 
-    // 3. Nama File & Download
-    $namaFile = 'Rekap-Penilaian-' . now()->format('d-m-Y') . '.xlsx';
-    $namaUstadzahOnly = $listUstadzah->pluck('nama_lengkap')->toArray();
+    public function rekap(Request $request)
+    {
+        // 1. Ambil list angkatan untuk filter
+        $allAngkatan = Angkatan::all();
+        
+        // 2. Query data PENILAIAN (Bukan Presensi)
+        $query = Penilaian::with('santriwati');
 
-    return Excel::download(new PenilaianExport($exportData, $namaUstadzahOnly), $namaFile);
-}
-
-public function rekap(Request $request)
-{
-    $tanggal = $request->input('tanggal', now()->format('Y-m-d'));
-    $angkatan = $request->input('angkatan');
-    $search = $request->input('search'); // Ambil input search
-
-    // 1. Ambil list angkatan untuk dropdown filter
-    $allAngkatan = \App\Models\Angkatan::all();
-
-    // 2. Query Santriwati dengan filter nama dan angkatan
-    $santriwatis = \App\Models\Santriwati::query()
-        ->when($search, function($q) use ($search) {
-            return $q->where('nama_lengkap', 'like', '%' . $search . '%');
-        })
-        ->when($angkatan, function($q) use ($angkatan) {
-            return $q->where('angkatan', $angkatan);
-        })
-        ->get();
-
-    // 3. Ambil daftar kegiatan
-    $kegiatans = \App\Models\Kegiatan::all();
-    $listKegiatan = $kegiatans->pluck('nama_kegiatan')->toArray();
-
-    $rekapData = [];
-
-    foreach ($santriwatis as $s) {
-        $row = [
-            'nama' => $s->nama_lengkap,
-            'angkatan' => $s->angkatan,
-        ];
-
-        foreach ($kegiatans as $k) {
-            // Logika hitung persentase ustadz di sini...
-            // Contoh sederhana (pastikan disesuaikan dengan logika persentase asli ustadz):
-            $presensi = \App\Models\Presensi::where('santriwati_id', $s->id)
-                ->where('kegiatan_id', $k->id)
-                ->whereDate('waktu_scan', $tanggal)
-                ->first();
-
-            $row[$k->nama_kegiatan] = $presensi ? 100 : 0;
+        // Filter Nama Santriwati
+        if ($request->filled('search')) {
+            $query->whereHas('santriwati', function($q) use ($request) {
+                $q->where('nama_lengkap', 'like', '%' . $request->search . '%');
+            });
         }
 
-        $rekapData[] = $row;
+        // Filter Angkatan
+        if ($request->filled('angkatan')) {
+            $query->where('angkatan', $request->angkatan);
+        }
+
+        // Filter Tanggal
+        if ($request->filled('tanggal')) {
+            $query->whereDate('tanggal', $request->tanggal);
+        }
+
+        $penilaians = $query->latest()->paginate(20);
+
+        // 3. Kembalikan ke view PENILAIAN
+        return view('kesiswaan.penilaian.rekap', compact('penilaians', 'allAngkatan'));
     }
 
-    return view('kesiswaan.presensi.rekap', compact('rekapData', 'listKegiatan', 'allAngkatan'));
-}
+    public function edit($id)
+    {
+        $penilaian = Penilaian::findOrFail($id);
+        $santris = Santriwati::all();
+        return view('kesiswaan.penilaian.edit', compact('penilaian', 'santris'));
+    }
 
+    public function update(Request $request, $id)
+    {
+        $penilaian = Penilaian::findOrFail($id);
+        
+        // Sesuaikan nama field dengan store agar konsisten
+        $validated = $request->validate([
+            'tanggal' => 'required|date',
+            'disiplin' => 'required',
+            'k3' => 'required',
+            'tanggung_jawab' => 'required',
+            'adab' => 'required',
+            'deskripsi' => 'nullable'
+        ]);
+
+        $penilaian->update($request->all());
+
+        return redirect()->route('penilaian.rekap')->with('success', 'Data penilaian berhasil diperbarui');
+    }
 }
