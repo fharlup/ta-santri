@@ -51,9 +51,7 @@
         <div class="text-center">
             <img src="{{ asset('assets/img/logo.png') }}" alt="Logo Tunas Qur'an" class="mx-auto w-80 h-auto object-contain">
             
-            <h2 class="mt-6 font-berkshire text-7xl text-brand-dark-green">
-                Tunas Qur'an
-            </h2>
+            
         </div>
     </div>
 
