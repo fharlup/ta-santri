@@ -33,4 +33,4 @@ Screenshots
 Berikut adalah tampilan antarmuka aplikasi SI-DISIPLIN:
 ![Dashboard login](docs/login.png)
 
-![Dashboard rfid](docs/screensoot.png)
+![Dashboard rfid](docs/rfid.png)
