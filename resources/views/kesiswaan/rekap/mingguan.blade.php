@@ -4,12 +4,16 @@
 <div class="max-w-full mx-auto pb-10">
     {{-- Header & Navigasi Kembali --}}
     <div class="mb-8 flex items-center justify-between">
-        <a href="{{ route('rekap.bulanan', [$santri->id, $bulan]) }}" class="flex items-center text-gray-400 hover:text-[#1B763B] transition font-bold text-xs uppercase tracking-widest">
+   <a href="{{ route('rekap.bulanan', [$santri->id, $bulan, $tahun]) }}" class="...">
+    <i class="ph ph-arrow-left mr-2 text-xl"></i> Kembali ke Detail Bulanan
+</a>
             <i class="ph ph-arrow-left mr-2 text-xl"></i> Kembali ke Detail Bulanan
         </a>
-        <h2 class="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">
-            Minggu {{ $minggu }} - {{ \Carbon\Carbon::create(null, $bulan)->translatedFormat('F') }} {{ date('Y') }}
-        </h2>
+        
+<h2 class="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">
+    Minggu {{ $minggu }} - {{ \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F') }} {{ $tahun }}
+</h2>
+
     </div>
 
     {{-- Profil Santriwati --}}

@@ -123,6 +123,7 @@ Route::middleware(['auth'])->prefix('rekap-kegiatan')->group(function () {
     // 4. Detail Bulanan (WAJIB tambah {tahun})
     Route::get('/bulanan/{santri_id}/{bulan}/{tahun}', [RekapKegiatanController::class, 'bulanan'])->name('rekap.bulanan');
 
+    Route::get('/penilaian-index/{santri_id}/{tahun}/{bulan}', [RekapKegiatanController::class, 'penilaianIndex'])->name('rekap.penilaian_index');
     // 5. Detail Mingguan (WAJIB tambah {tahun})
     Route::get('/mingguan/{santri_id}/{bulan}/{minggu}/{tahun}', [RekapKegiatanController::class, 'mingguan'])->name('rekap.mingguan');
 });
