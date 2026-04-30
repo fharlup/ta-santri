@@ -56,6 +56,9 @@
                 <a href="{{ route('penilaian.rekap') }}" class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*rekap-penilaian*') ? 'bg-[#1B763B] font-bold' : 'text-white/60 hover:bg-white/5' }}">
                     <i class="ph ph-medal mr-3 text-xl"></i> Rekap Penilaian
                 </a>
+                <a href="{{ route('rekap.index') }}" class="flex items-center px-4 py-3 rounded-2xl transition-all {{ Request::is('*rekap-kegiatan*') ? 'bg-[#1B763B] font-bold' : 'text-white/60 hover:bg-white/5' }}">
+    <i class="ph ph-chart-line-up mr-3 text-xl"></i> Rekap Tahunan 
+</a>
             @endif
 
             {{-- Manajemen untuk Kesiswaan dan Komdis --}}

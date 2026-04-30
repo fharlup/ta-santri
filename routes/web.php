@@ -9,6 +9,7 @@ use App\Http\Controllers\{
     KesiswaanController,
     PenilaianController,
     PresensiController,
+    RekapKegiatanController,
     MasterTambahanController
 };
 
@@ -32,7 +33,7 @@ Route::middleware('auth')->group(function () {
 
     /* |--------------------------------------------------------------------------
     | 3. PRESENSI (Kesiswaan, Komdis, Wali Kelas, Musyrifah)
-    |--------------------------------------------------------------------------
+    |---------------------------------------g-----------------------------------
     */
     Route::middleware('role:Kesiswaan,Komdis,Wali Kelas,Musyrifah')->prefix('presensi')->name('presensi.')->group(function () {
         Route::get('/scan', [PresensiController::class, 'scanPage'])->name('scan');
@@ -109,4 +110,23 @@ Route::middleware('auth')->group(function () {
             Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('master.kelas.destroy');
         });
     });
+    Route::middleware(['auth'])->prefix('rekap-kegiatan')->group(function () {
+    // Page 1: Pilih Anak (Admin Only)
+    Route::get('/', [RekapKegiatanController::class, 'index'])->name('rekap.index');
+
+    // Page 2: Overview Per Tahun (Jan - Des)
+    Route::get('/tahunan/{santri_id}', [RekapKegiatanController::class, 'tahunan'])->name('rekap.tahunan');
+
+    // Page 3: Detail Per Bulan (Minggu 1 - 4/5)
+    Route::get('/bulanan/{santri_id}/{bulan}', [RekapKegiatanController::class, 'bulanan'])->name('rekap.bulanan');
+
+    // Page 4: Detail Per Minggu (Checklist Harian)
+    Route::get('/mingguan/{santri_id}/{bulan}/{minggu}', [RekapKegiatanController::class, 'mingguan'])->name('rekap.mingguan');
+});
+Route::middleware(['auth'])->prefix('rekap-kegiatan')->group(function () {
+    Route::get('/', [RekapKegiatanController::class, 'index'])->name('rekap.index');
+    Route::get('/tahunan/{santri_id}', [RekapKegiatanController::class, 'tahunan'])->name('rekap.tahunan');
+    Route::get('/bulanan/{santri_id}/{bulan}', [RekapKegiatanController::class, 'bulanan'])->name('rekap.bulanan');
+    Route::get('/mingguan/{santri_id}/{bulan}/{minggu}', [RekapKegiatanController::class, 'mingguan'])->name('rekap.mingguan');
+});
 });
