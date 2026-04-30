@@ -41,38 +41,44 @@ class RekapKegiatanController extends Controller
      * PAGE 2: OVERVIEW TAHUNAN (Jan - Des)
      * Menampilkan 12 bulan dengan progress bar 100%.
      */
-    public function tahunan($santri_id)
-    {
-        $santri = Santriwati::findOrFail($santri_id);
-        $tahun = date('Y');
-        $rekapTahunan = [];
+    public function tahunan($santri_id, $tahun)
+{
+    $santri = Santriwati::findOrFail($santri_id);
+    $rekapTahunan = [];
 
-        for ($m = 1; $m <= 12; $m++) {
-            $startDate = Carbon::create($tahun, $m, 1)->startOfMonth();
-            $endDate = Carbon::create($tahun, $m, 1)->endOfMonth();
+    for ($m = 1; $m <= 12; $m++) {
+        // KUNCI UTAMA: Pastikan Carbon membuat tanggal berdasarkan $tahun yang dipilih
+        $startDate = \Carbon\Carbon::create($tahun, $m, 1)->startOfMonth();
+        $endDate = \Carbon\Carbon::create($tahun, $m, 1)->endOfMonth();
 
-            $totalHadir = Presensi::where('santriwati_id', $santri_id)
-                ->whereBetween('waktu_scan', [$startDate, $endDate])
-                ->whereIn('status', ['HADIR', 'TELAT'])
-                ->count();
+        // Hitung kehadiran hanya pada rentang waktu di tahun tersebut
+        $totalHadir = Presensi::where('santriwati_id', $santri_id)
+            ->whereBetween('waktu_scan', [
+                $startDate->toDateTimeString(), 
+                $endDate->toDateTimeString()
+            ])
+            ->whereIn('status', ['HADIR', 'TELAT'])
+            ->count();
 
-            $totalKegiatan = Kegiatan::whereBetween('tanggal', [$startDate, $endDate])
-                ->where('angkatan', $santri->angkatan)
-                ->count();
+        // Hitung total kegiatan wajib di bulan & tahun tersebut
+        $totalKegiatan = Kegiatan::whereBetween('tanggal', [$startDate, $endDate])
+            ->where('angkatan', $santri->angkatan)
+            ->count();
 
-            $persen = ($totalKegiatan > 0) ? ($totalHadir / $totalKegiatan) * 100 : 0;
+        // Hitung persentase
+        $persen = ($totalKegiatan > 0) ? ($totalHadir / $totalKegiatan) * 100 : 0;
 
-            $rekapTahunan[] = [
-                'bulan_ke' => $m,
-                'nama_bulan' => $startDate->translatedFormat('F'),
-                'persentase' => round($persen),
-                'total_hadir' => $totalHadir,
-                'total_kegiatan' => $totalKegiatan
-            ];
-        }
-
-        return view('kesiswaan.rekap.tahunan', compact('rekapTahunan', 'santri', 'tahun'));
+        $rekapTahunan[] = [
+            'bulan_ke' => $m,
+            'nama_bulan' => $startDate->translatedFormat('F'),
+            'persentase' => round($persen),
+            'total_hadir' => $totalHadir,
+            'total_kegiatan' => $totalKegiatan
+        ];
     }
+
+    return view('kesiswaan.rekap.tahunan', compact('rekapTahunan', 'santri', 'tahun'));
+}
 
     /**
      * PAGE 3: DETAIL BULANAN (Logic Penurunan 25% Per Minggu)
@@ -178,5 +184,20 @@ public function mingguan($santri_id, $bulan, $minggu)
 
     return view('kesiswaan.rekap.mingguan', compact('rekapHarian', 'santri', 'bulan', 'minggu'));
 }
+    public function pilihTahun($santri_id)
+{
+    $santri = Santriwati::findOrFail($santri_id);
     
+    // Logika: Ambil tahun masuk dari kolom angkatan (misal: 2024)
+    $tahunMasuk = (int) $santri->angkatan; 
+    
+    // Hasilkan daftar 3 tahun masa studi (Tahun ke-1, ke-2, ke-3)
+    $daftarTahun = [
+        ['label' => 'Tahun 1', 'value' => $tahunMasuk],
+        ['label' => 'Tahun 2', 'value' => $tahunMasuk + 1],
+        ['label' => 'Tahun 3', 'value' => $tahunMasuk + 2],
+    ];
+
+    return view('kesiswaan.rekap.pilih_tahun', compact('santri', 'daftarTahun'));
+}
 }

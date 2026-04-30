@@ -39,7 +39,7 @@
     {{-- Grid Daftar Anak --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @forelse($santris as $s)
-        <a href="{{ route('rekap.tahunan', $s->id) }}" class="group">
+        <a href="{{ route('rekap.pilih_tahun', $s->id) }}" class="group">
             <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 hover:border-[#1B763B] transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
                 <div class="w-20 h-20 bg-gray-100 rounded-3xl mb-6 flex items-center justify-center text-gray-300 group-hover:bg-[#1B763B]/10 group-hover:text-[#1B763B] transition-colors">
                     <i class="ph-duotone ph-user-circle text-5xl"></i>

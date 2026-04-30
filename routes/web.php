@@ -110,23 +110,19 @@ Route::middleware('auth')->group(function () {
             Route::delete('/kelas/{id}', [MasterTambahanController::class, 'destroyKelas'])->name('master.kelas.destroy');
         });
     });
-    Route::middleware(['auth'])->prefix('rekap-kegiatan')->group(function () {
-    // Page 1: Pilih Anak (Admin Only)
-    Route::get('/', [RekapKegiatanController::class, 'index'])->name('rekap.index');
-
-    // Page 2: Overview Per Tahun (Jan - Des)
-    Route::get('/tahunan/{santri_id}', [RekapKegiatanController::class, 'tahunan'])->name('rekap.tahunan');
-
-    // Page 3: Detail Per Bulan (Minggu 1 - 4/5)
-    Route::get('/bulanan/{santri_id}/{bulan}', [RekapKegiatanController::class, 'bulanan'])->name('rekap.bulanan');
-
-    // Page 4: Detail Per Minggu (Checklist Harian)
-    Route::get('/mingguan/{santri_id}/{bulan}/{minggu}', [RekapKegiatanController::class, 'mingguan'])->name('rekap.mingguan');
 });
 Route::middleware(['auth'])->prefix('rekap-kegiatan')->group(function () {
     Route::get('/', [RekapKegiatanController::class, 'index'])->name('rekap.index');
-    Route::get('/tahunan/{santri_id}', [RekapKegiatanController::class, 'tahunan'])->name('rekap.tahunan');
-    Route::get('/bulanan/{santri_id}/{bulan}', [RekapKegiatanController::class, 'bulanan'])->name('rekap.bulanan');
-    Route::get('/mingguan/{santri_id}/{bulan}/{minggu}', [RekapKegiatanController::class, 'mingguan'])->name('rekap.mingguan');
-});
+    
+    // 2. Pilih Tahun (Hanya butuh ID Santri)
+    Route::get('/pilih-tahun/{santri_id}', [RekapKegiatanController::class, 'pilihTahun'])->name('rekap.pilih_tahun');
+
+    // 3. Rekap 12 Bulan (WAJIB tambah {tahun})
+    Route::get('/tahunan/{santri_id}/{tahun}', [RekapKegiatanController::class, 'tahunan'])->name('rekap.tahunan');
+
+    // 4. Detail Bulanan (WAJIB tambah {tahun})
+    Route::get('/bulanan/{santri_id}/{bulan}/{tahun}', [RekapKegiatanController::class, 'bulanan'])->name('rekap.bulanan');
+
+    // 5. Detail Mingguan (WAJIB tambah {tahun})
+    Route::get('/mingguan/{santri_id}/{bulan}/{minggu}/{tahun}', [RekapKegiatanController::class, 'mingguan'])->name('rekap.mingguan');
 });

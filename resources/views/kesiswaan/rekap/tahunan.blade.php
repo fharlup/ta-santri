@@ -24,7 +24,7 @@
     {{-- Grid 12 Bulan --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         @foreach($rekapTahunan as $r)
-        <a href="{{ route('rekap.bulanan', [$santri->id, $r['bulan_ke']]) }}" class="group">
+        <a href="{{ route('rekap.bulanan', [$santri->id, $r['bulan_ke'], $tahun]) }}" class="group">
             <div class="bg-[#1e1e1e] p-8 rounded-[40px] shadow-2xl border border-white/5 transition-all duration-300 group-hover:scale-[1.03] group-hover:border-[#8BC53F]/50">
                 <div class="flex justify-between items-end mb-6">
                     <h3 class="text-2xl font-black text-white uppercase tracking-tighter">{{ $r['nama_bulan'] }}</h3>
